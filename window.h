@@ -43,24 +43,6 @@
 
 # if defined WINDOW_IMPLEMENTATION
 #
-#  /* Auto - Configuration preprocessor statements... */
-#  if !defined (WINDOW_PLATFORM_X11) !defined (WINDOW_PLATFORM_WAYLAND) !defined (WINDOW_PLATFORM_WIN32)
-#
-#   /* default window library for *nix should be X11... */
-#   if WINDOW_PLATFORM == "linux" || WINDOW_PLATFORM == "bsd"
-#    define WINDOW_PLATFORM_X11 1
-#
-#   /* default window library for win32 should be... win32... */
-#   elif WINDOW_PLATFORM == "win32"
-#    define WINDOW_PLATFORM_WIN32 1
-#
-#   /* undefined windowing library... */
-#   else
-#    error
-#   endif
-#
-#  endif
-#
 #  /* WINDOW_PLATFORM_X11 - Unix X11 implementation layer */
 #  if defined (WINDOW_PLATFORM_X11)
 #   include <X11/X.h>
