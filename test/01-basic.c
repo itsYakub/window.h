@@ -13,8 +13,7 @@ int main(void) {
 
     /* create window */
     t_window window = 0;
-    win_create(&window, 800, 600, "Hello, window.h", 0);
-    if (!window) {
+    if (!win_create(&window, 800, 600, "Hello, window.h", 0)) {
         fprintf(stderr, "win_create() failed\n");
 
         win_quit();
@@ -22,13 +21,18 @@ int main(void) {
     }
 
     /* map window onto the screen */
-    win_map(window);
+    if (!win_map(window)) {
+        fprintf(stderr, "win_create() failed\n");
+
+        win_quit();
+        return (1);
+    }
 
     int exit = 0;
     while (!exit) {
         /* poll events */
         t_event event = { 0 };
-        while (win_pollEvents(window, &event)) {
+        while (win_pollEvents(&event)) {
             switch (event.type) {
                 case (WINDOW_EVENT_QUIT): {
                     exit = 1;

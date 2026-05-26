@@ -93,7 +93,15 @@ union u_event {
     t_eventQuit quit;
 };
 
-WINDEF int win_pollEvents(t_window, t_event *);
+WINDEF int win_pollEvents(t_event *);
+
+WINDEF int win_waitEvents(t_event *);
+
+WINDEF int win_pushEvents(t_event *);
+
+WINDEF int win_popEvents(t_event *);
+
+WINDEF int win_flush(void);
 
 # if defined WINDOW_IMPLEMENTATION
 #
@@ -124,6 +132,15 @@ struct s_platform {
         int depth;
         int class;
     } config;
+
+    struct {
+        /* TODO:
+         *  Change from stack - array to vector...
+         * */
+        t_event arr[1024];
+        size_t  cnt;
+        size_t  cap;
+    } eventQueue;
 };
 
 static struct s_platform *WINDOW = 0; 
@@ -165,6 +182,7 @@ WININT int __win_map_x11(t_window);
 
 WININT int __win_unmap_x11(t_window);
 
+
 WINDEF int win_create(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) { return (__win_create_x11(win, w, h, t, f)); }
 
 WINDEF int win_destroy(t_window win) { return (__win_destroy_x11(win)); }
@@ -175,10 +193,26 @@ WINDEF int win_unmap(t_window win) { return (__win_unmap_x11(win)); }
 
 /* event functions */
 
-WININT int __win_pollEvents_x11(t_window, t_event *);
+WININT int __win_pollEvents_x11(t_event *);
 
-WINDEF int win_pollEvents(t_window win, t_event *event) { return (__win_pollEvents_x11(win, event)); }
+WININT int __win_waitEvents_x11(t_event *);
 
+WININT int __win_pushEvents_x11(t_event *);
+
+WININT int __win_popEvents_x11(t_event *);
+
+WININT int __win_flush_x11(void);
+
+
+WINDEF int win_pollEvents(t_event *event) { return (__win_pollEvents_x11(event)); }
+
+WINDEF int win_waitEvents(t_event *event) { return (__win_waitEvents_x11(event)); }
+
+WINDEF int win_pushEvents(t_event *event) { return (__win_pushEvents_x11(event)); }
+
+WINDEF int win_popEvents(t_event *event) { return (__win_popEvents_x11(event)); }
+
+WINDEF int win_flush(void) { return (__win_flush_x11()); }
 
 /* platform functions */
 
@@ -222,9 +256,17 @@ WININT int __win_init_x11(void) {
     WINDOW->config.depth = 24;
     WINDOW->config.class = TrueColor;
 
+    /* set up event queue... */
+    WINDOW->eventQueue.cnt = 0;
+    WINDOW->eventQueue.cap = 1024;
+    for (size_t i = 0; i < WINDOW->eventQueue.cap; i++) {
+        WINDOW->eventQueue.arr[i] = (t_event) { 0 };
+    }
+
     /* success */
     return (1);
 }
+
 
 WININT int __win_quit_x11(void) {
     /* terminate `xlib`... */
@@ -310,6 +352,7 @@ WININT int __win_create_x11(t_window *win, const size_t w, const size_t h, const
     return (1);
 }
 
+
 WININT int __win_destroy_x11(t_window win) {
     /* null-check... */
     if (!win) { return (0); }
@@ -324,6 +367,7 @@ WININT int __win_destroy_x11(t_window win) {
     return (1);
 }
 
+
 WININT int __win_map_x11(t_window win) {
     /* null-check... */
     if (!win)            { return (0); }
@@ -334,6 +378,7 @@ WININT int __win_map_x11(t_window win) {
     /* success */
     return (1);
 }
+
 
 WININT int __win_unmap_x11(t_window win) {
     /* null-check... */
@@ -348,7 +393,112 @@ WININT int __win_unmap_x11(t_window win) {
 
 /* event functions */
 
-WININT int __win_pollEvents_x11(t_window win, t_event *event) {
+WININT int __win_eventLoop_x11(void);
+
+WININT int __win_pollEvents_x11(t_event *event) {
+    /* null-check... */
+    if (!event) { return (0); }
+
+    /* poll events from platform queue... */
+    if (win_popEvents(event)) { return (1); }
+
+    /* handle platform events... */
+    __win_eventLoop_x11();
+
+    /* no events in the queue...
+     * ...it usually means we can break from a loop that iterates until there's no event in the queue left...
+     * ...so returning `false` seems reasonable
+     * */
+    *event = (t_event) { 0 };
+    return (0);
+}
+
+WININT int __win_eventLoop_x11(void) {
+    XEvent xevent = { 0 };
+    while (XPending(WINDOW->xlib.dpy)) {
+        XNextEvent(WINDOW->xlib.dpy, &xevent);
+
+        switch (xevent.type) {
+            case (ClientMessage): {
+                if (xevent.xclient.message_type == WINDOW->xatom.wm_protocols) {
+                    const Atom data = xevent.xclient.data.l[0];
+
+                    if (data == WINDOW->xatom.wm_delete_window) {
+                        t_event event = (t_event) {
+                            .type = WINDOW_EVENT_QUIT,
+                            .quit = (t_eventQuit) {
+                                .type = WINDOW_EVENT_QUIT,
+                                .timestamp = 0 /* TODO: change to timestamp */
+                            }
+                        };
+
+                        win_pushEvents(&event);
+                    }
+                }
+            } break;
+        }
+    }
+
+    /* success */
+    return (1);
+}
+
+
+WININT int __win_waitEvents_x11(t_event *event) {
+    /* null-check... */
+    if (!event) { return (0); }
+
+
+    /* success */
+    return (1);
+}
+
+
+WININT int __win_pushEvents_x11(t_event *event) {
+    /* null-check... */
+    if (!event) { return (0); }
+
+    /* bounds-check... */
+    if (WINDOW->eventQueue.cnt >= WINDOW->eventQueue.cap) { return (0); }
+
+    /* copy-assignment event object to event queue... */
+    WINDOW->eventQueue.arr[WINDOW->eventQueue.cnt++] = *event;
+
+    /* success */
+    return (1);
+}
+
+
+WININT int __win_popEvents_x11(t_event *event) {
+    /* null-check... */
+    if (!event) { return (0); }
+
+    /* bounds-check... */
+    if (WINDOW->eventQueue.cnt == 0) { return (0); }
+
+    /* copy to `event` pointer... */
+    *event = WINDOW->eventQueue.arr[0];
+
+    /* move all the event objects one place to the front... */
+    size_t i = 0;
+    while (i < WINDOW->eventQueue.cnt - 1) {
+        WINDOW->eventQueue.arr[i] = WINDOW->eventQueue.arr[++i];
+    }
+
+    /* set last queue element to `zero`... */
+    WINDOW->eventQueue.arr[i] = (t_event) { 0 };
+
+    /* ...and decrement the size of the queue... */
+    WINDOW->eventQueue.cnt--;
+
+    /* success */
+    return (1);
+}
+
+
+WININT int __win_flush_x11(void) {
+    if (!XFlush(WINDOW->xlib.dpy)) { return (0); }
+
     /* success */
     return (1);
 }
