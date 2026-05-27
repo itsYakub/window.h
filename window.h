@@ -66,8 +66,17 @@ enum e_eventType {
     WINDOW_EVENT_NONE = 0,
 # define WINDOW_EVENT_NONE WINDOW_EVENT_NONE
 
-    WINDOW_EVENT_QUIT = 1,
+    WINDOW_EVENT_QUIT,
 # define WINDOW_EVENT_QUIT WINDOW_EVENT_QUIT
+
+    WINDOW_EVENT_MOTION,
+# define WINDOW_EVENT_MOTION WINDOW_EVENT_MOTION
+
+    WINDOW_EVENT_BUTTON,
+# define WINDOW_EVENT_BUTTON WINDOW_EVENT_BUTTON
+
+    WINDOW_EVENT_SCROLL,
+# define WINDOW_EVENT_SCROLL_DOWN WINDOW_EVENT_SCROLL
 
     /* ... */
 
@@ -85,12 +94,50 @@ struct s_eventQuit {
 };
 
 
+typedef struct s_eventMotion t_eventMotion;
+
+struct s_eventMotion {
+    t_eventType type;
+    size_t timestamp;
+
+    uint64_t x, xrel;
+    uint64_t y, yrel;
+};
+
+
+typedef struct s_eventButton t_eventButton;
+
+struct s_eventButton {
+    t_eventType type;
+    size_t timestamp;
+
+    uint8_t btn;
+    uint8_t state;
+};
+
+
+typedef struct s_eventScroll t_eventScroll;
+
+struct s_eventScroll {
+    t_eventType type;
+    size_t timestamp;
+
+    int8_t value;
+};
+
+
 typedef union u_event t_event;
 
 union u_event {
     t_eventType type;
 
     t_eventQuit quit;
+
+    t_eventMotion motion;
+    
+    t_eventButton button;
+    
+    t_eventScroll scroll;
 };
 
 WINDEF int win_pollEvents(t_event *);
@@ -482,6 +529,70 @@ WININT int __win_eventLoop_x11(void) {
                     }
                 }
             } break;
+
+            case (MotionNotify): {
+                t_event event = (t_event) {
+                    .type   = WINDOW_EVENT_MOTION,
+                    .motion = (t_eventMotion) {
+                        .type = WINDOW_EVENT_MOTION,
+                        .timestamp = win_getTime(),
+                        .x = xevent.xmotion.x,
+                        .xrel = xevent.xmotion.x_root,
+                        .y = xevent.xmotion.y,
+                        .yrel = xevent.xmotion.y_root,
+                    }
+                };
+
+                win_pushEvents(&event);
+            } break;
+
+            case (ButtonPress):
+            case (ButtonRelease): {
+                uint8_t btn = 0;
+                switch (xevent.xbutton.button) {
+                    case (1): { btn = 1; } break; /* left */
+                    case (2): { btn = 3; } break; /* middle */
+                    case (3): { btn = 2; } break; /* right */
+                    case (4): { btn = 4; } break; /* scroll up */
+                    case (5): { btn = 5; } break; /* scroll down */
+                }
+
+                /* invalid button... */
+                if (btn == 0) { break; }
+
+                /* mouse button presses / releases... */
+                else if (btn >= 1 && btn <= 3) {
+                    uint8_t state = (xevent.type == ButtonPress) ? 1 : 0;
+
+                    t_event event = (t_event) {
+                        .type   = WINDOW_EVENT_BUTTON,
+                        .button = (t_eventButton) {
+                            .type = WINDOW_EVENT_BUTTON,
+                            .timestamp = win_getTime(),
+                            .btn = btn,
+                            .state = state
+                        }
+                    };
+                    
+                    win_pushEvents(&event);
+                }
+
+                /* scroll up / down... */
+                else {
+                    if (xevent.type == ButtonRelease) { break; }
+
+                    t_event event = (t_event) {
+                        .type   = WINDOW_EVENT_SCROLL,
+                        .scroll = (t_eventScroll) {
+                            .type = WINDOW_EVENT_SCROLL,
+                            .timestamp = win_getTime(),
+                            .value = (btn == 4) ? 1 : -1
+                        }
+                    };
+
+                    win_pushEvents(&event);
+                }
+            } break;
         }
     }
 
@@ -530,7 +641,9 @@ WININT int __win_pushEvents_x11(t_event *event) {
 
 WININT int __win_isCoalescable_x11(t_eventType type) {
     const uint64_t coalescable = 
-        (1U << WINDOW_EVENT_NONE);
+        (1U << WINDOW_EVENT_MOTION) |
+        (1U << WINDOW_EVENT_BUTTON) |
+        (1U << WINDOW_EVENT_SCROLL);
 
     return ((coalescable >> type) & 1);
 }

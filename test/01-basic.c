@@ -35,7 +35,20 @@ int main(void) {
         while (win_pollEvents(&event)) {
             switch (event.type) {
                 case (WINDOW_EVENT_QUIT): {
+                    printf("WINDOW_EVENT_QUIT\n");
                     exit = 1;
+                } break;
+
+                case (WINDOW_EVENT_MOTION): {
+                    printf("WINDOW_EVENT_MOTION:\nx:%d\nxrel:%d\ny:%d\nyrel:%d\n", event.motion.x, event.motion.xrel, event.motion.y, event.motion.yrel);
+                } break;
+
+                case (WINDOW_EVENT_BUTTON): {
+                    printf("WINDOW_EVENT_BUTTON:\nbtn:%d\nstate:%d\n", event.button.btn, event.button.state);
+                } break;
+
+                case (WINDOW_EVENT_SCROLL): {
+                    printf("WINDOW_EVENT_SCROLL:\nvalue:%d\n", event.scroll.value);
                 } break;
             }
         }
