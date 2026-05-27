@@ -163,6 +163,11 @@ struct s_platform {
         size_t   cnt;
         size_t   cap;
     } da_event;
+
+    struct {
+        t_window *arr;
+        size_t    cap;
+    } da_window;
 };
 
 static struct s_platform *WINDOW = 0; 
@@ -313,6 +318,11 @@ WININT int __win_init_x11(void) {
     WINDOW->da_event.arr = calloc(WINDOW->da_event.cap, sizeof(t_event));
     if (!WINDOW->da_event.arr) { return (0); }
 
+    /* set up window array... */
+    WINDOW->da_window.cap = 16;
+    WINDOW->da_window.arr = calloc(WINDOW->da_window.cap, sizeof(t_window));
+    if (!WINDOW->da_window.arr) { return (0); }
+
     /* success */
     return (1);
 }
@@ -321,6 +331,17 @@ WININT int __win_init_x11(void) {
 WININT int __win_quit_x11(void) {
     /* terminate `xlib`... */
     XCloseDisplay(WINDOW->xlib.dpy), WINDOW->xlib.dpy = 0;
+
+    /* deallocate all the windows... */
+    for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
+        if (!WINDOW->da_window.arr[i]) { continue; }
+
+        win_destroy(WINDOW->da_window.arr[i]);
+    }
+
+    free(WINDOW->da_window.arr);
+    WINDOW->da_window.arr = 0;
+    WINDOW->da_window.cap = 0;
    
     /* deallocate da_event... */
     free(WINDOW->da_event.arr);
@@ -402,6 +423,33 @@ WININT int __win_create_x11(t_window *win, const size_t w, const size_t h, const
 
     XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_protocols, 1);
     XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_delete_window, 1);
+    
+    /* append window to da_window... */
+    size_t i;
+    for (i = 0; i < WINDOW->da_window.cap; i++) {
+        /* set the first `null` window object to the current window... */
+        if (WINDOW->da_window.arr[i] == 0) {
+            WINDOW->da_window.arr[i]  = result;
+            break;
+        }
+    }
+
+    /* da_window is exhausted, we must resize it.
+     * After that we must append the window to newly - resized da_window.
+     * */
+    if (i == WINDOW->da_window.cap) {
+        WINDOW->da_window.cap *= 1.5;
+        WINDOW->da_window.arr  = realloc(WINDOW->da_window.arr, WINDOW->da_window.cap * sizeof(t_window));
+        if (!WINDOW->da_window.arr) { return (0); }
+
+        for ( ; i< WINDOW->da_window.cap; i++) {
+            /* set the first `null` window object to the current window... */
+            if (WINDOW->da_window.arr[i] == 0) {
+                WINDOW->da_window.arr[i]  = result;
+                break;
+            }
+        }
+    }
 
     /* set the `result` object as `win` return object... */
     *win = result;
@@ -414,6 +462,14 @@ WININT int __win_create_x11(t_window *win, const size_t w, const size_t h, const
 WININT int __win_destroy_x11(t_window win) {
     /* null-check... */
     if (!win) { return (0); }
+
+    /* erase window from da_window... */
+    for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
+        if (win == WINDOW->da_window.arr[i]) {
+            WINDOW->da_window.arr[i] = 0;
+            break;
+        }
+    }
 
     /* destroy window's components... */
     XDestroyWindow(win->xlib.dpy, win->xlib.w_id);
