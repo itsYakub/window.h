@@ -200,6 +200,14 @@ struct s_window {
     struct {
         XVisualInfo visual;
     } xutil;
+
+    struct {
+        /* position attributes... */
+        size_t x, y;
+
+        /* dimension attributes... */
+        size_t w, h;
+    } attr;
 };
 
 WININT int __win_create_x11(t_window *, const size_t, const size_t, const char *, const uint64_t);
@@ -329,9 +337,6 @@ WININT int __win_init_x11(void) {
 
 
 WININT int __win_quit_x11(void) {
-    /* terminate `xlib`... */
-    XCloseDisplay(WINDOW->xlib.dpy), WINDOW->xlib.dpy = 0;
-
     /* deallocate all the windows... */
     for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
         if (!WINDOW->da_window.arr[i]) { continue; }
@@ -348,6 +353,9 @@ WININT int __win_quit_x11(void) {
     WINDOW->da_event.arr = 0;
     WINDOW->da_event.cnt = 0;
     WINDOW->da_event.cap = 0;
+
+    /* terminate `xlib`... */
+    XCloseDisplay(WINDOW->xlib.dpy), WINDOW->xlib.dpy = 0;
 
     /* deallocate `WINDOW` object... */
     free(WINDOW), WINDOW = 0;
@@ -423,7 +431,11 @@ WININT int __win_create_x11(t_window *win, const size_t w, const size_t h, const
 
     XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_protocols, 1);
     XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_delete_window, 1);
-    
+   
+    /* configure windows attributes... */
+    result->attr.w = w;
+    result->attr.h = h;
+
     /* append window to da_window... */
     size_t i;
     for (i = 0; i < WINDOW->da_window.cap; i++) {
@@ -620,9 +632,59 @@ WININT int __win_eventLoop_x11(void) {
             } break;
 
             case (ConfigureNotify): {
-                /* TODO:
-                 *  Implement window events when you find a way to look-up window references
-                 * */
+                /* get the window reference... */
+                t_window win = 0;
+                for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
+                    if (WINDOW->da_window.arr[i]) {
+                        if (WINDOW->da_window.arr[i]->xlib.w_id == xevent.xconfigure.window) {
+                            win = WINDOW->da_window.arr[i];
+                            break;
+                        }
+                    }
+                }
+
+                /* handle motion event... */
+                if (win->attr.x != (size_t) xevent.xconfigure.x ||
+                    win->attr.y != (size_t) xevent.xconfigure.y
+                ) {
+                    win->attr.x = xevent.xconfigure.x;
+                    win->attr.y = xevent.xconfigure.y;
+
+                    t_event event = (t_event) {
+                        .type = WINDOW_EVENT_WINDOW_MOTION,
+                        .timestamp = win_getTime(),
+                        .data = {
+                            .l = {
+                                [0] = xevent.xconfigure.x,
+                                [1] = xevent.xconfigure.y,
+                            }
+                        }
+                    };
+                    
+                    win_pushEvents(&event);
+                }
+
+                /* handle resize event... */
+                if (win->attr.w != (size_t) xevent.xconfigure.width ||
+                    win->attr.h != (size_t) xevent.xconfigure.height
+                ) {
+                    win->attr.w = xevent.xconfigure.width;
+                    win->attr.h = xevent.xconfigure.height;
+
+                    t_event event = (t_event) {
+                        .type = WINDOW_EVENT_WINDOW_RESIZE,
+                        .timestamp = win_getTime(),
+                        .data = {
+                            .l = {
+                                [0] = xevent.xconfigure.width,
+                                [1] = xevent.xconfigure.height,
+                            }
+                        }
+                    };
+                    
+                    win_pushEvents(&event);
+                }
+
             } break;
         }
     }
@@ -671,12 +733,9 @@ WININT int __win_pushEvents_x11(t_event *event) {
 }
 
 WININT int __win_isCoalescable_x11(t_eventType type) {
-    const uint64_t coalescable = 
-        (1U << WINDOW_EVENT_MOUSE_MOTION) |
-        (1U << WINDOW_EVENT_WINDOW_MOTION) |
-        (1U << WINDOW_EVENT_WINDOW_RESIZE);
-
-    return ((coalescable >> type) & 1);
+    return (type == WINDOW_EVENT_MOUSE_MOTION ||
+            type == WINDOW_EVENT_WINDOW_MOTION ||
+            type == WINDOW_EVENT_WINDOW_RESIZE);
 }
 
 
@@ -692,8 +751,8 @@ WININT int __win_popEvents_x11(t_event *event) {
 
     /* move all the event objects one place to the front... */
     size_t i = 0;
-    while (i < WINDOW->da_event.cnt - 1) {
-        WINDOW->da_event.arr[i] = WINDOW->da_event.arr[++i];
+    for ( ; i < WINDOW->da_event.cnt - 1; i++) {
+        WINDOW->da_event.arr[i] = WINDOW->da_event.arr[i + 1];
     }
 
     /* set last queue element to `zero`... */

@@ -38,6 +38,14 @@ int main(void) {
                     printf("WINDOW_EVENT_QUIT\n");
                     exit = 1;
                 } break;
+                
+                case (WINDOW_EVENT_WINDOW_RESIZE): {
+                    printf("WINDOW_EVENT_WINDOW_RESIZE:\nw:%d\nh:%d\n", event.data.l[0], event.data.l[1]);
+                } break;
+                
+                case (WINDOW_EVENT_WINDOW_MOTION): {
+                    printf("WINDOW_EVENT_WINDOW_MOTION:\nw:%d\nh:%d\n", event.data.l[0], event.data.l[1]);
+                } break;
             }
         }
     }
