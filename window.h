@@ -103,12 +103,21 @@ WINDEF int win_popEvents(t_event *);
 
 WINDEF int win_flush(void);
 
+/* timing functions */
+
+WINDEF uint64_t win_getTime(void);
+
+WINDEF int win_waitTime(uint64_t);
+
 # if defined WINDOW_IMPLEMENTATION
 #
 #  include <stdlib.h>
 #
 #  /* WINDOW_PLATFORM_X11 - Unix X11 implementation layer */
 #  if defined (WINDOW_PLATFORM_X11)
+#   include <unistd.h>
+#   include <sys/time.h>
+#
 #   include <X11/X.h>
 #   include <X11/Xlib.h>
 #   include <X11/Xutil.h>
@@ -149,6 +158,7 @@ WININT int __win_quit_x11(void);
 
 WINDEF int win_init(void) { return (__win_init_x11()); }
 
+
 WINDEF int win_quit(void) { return (__win_quit_x11()); }
 
 /* windowing functions */
@@ -182,9 +192,12 @@ WININT int __win_unmap_x11(t_window);
 
 WINDEF int win_create(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) { return (__win_create_x11(win, w, h, t, f)); }
 
+
 WINDEF int win_destroy(t_window win) { return (__win_destroy_x11(win)); }
 
+
 WINDEF int win_map(t_window win) { return (__win_map_x11(win)); }
+
 
 WINDEF int win_unmap(t_window win) { return (__win_unmap_x11(win)); }
 
@@ -203,13 +216,38 @@ WININT int __win_flush_x11(void);
 
 WINDEF int win_pollEvents(t_event *event) { return (__win_pollEvents_x11(event)); }
 
+
 WINDEF int win_waitEvents(t_event *event) { return (__win_waitEvents_x11(event)); }
+
 
 WINDEF int win_pushEvents(t_event *event) { return (__win_pushEvents_x11(event)); }
 
+
 WINDEF int win_popEvents(t_event *event) { return (__win_popEvents_x11(event)); }
 
+
 WINDEF int win_flush(void) { return (__win_flush_x11()); }
+
+/* timing functions */
+
+WINDEF uint64_t win_getTime(void) {
+    struct timeval t;
+    if (gettimeofday(&t, 0) == -1) {
+        return (0);
+    }
+
+    return (t.tv_sec * 1000 + t.tv_usec / 1000);
+}
+
+
+WINDEF int win_waitTime(uint64_t ms) {
+    uint64_t t = win_getTime();
+    if (t == 0) { return (0); }
+
+    while ((win_getTime() - t) < ms);
+    return (1);
+}
+
 
 /* platform functions */
 
@@ -436,7 +474,7 @@ WININT int __win_eventLoop_x11(void) {
                             .type = WINDOW_EVENT_QUIT,
                             .quit = (t_eventQuit) {
                                 .type = WINDOW_EVENT_QUIT,
-                                .timestamp = 0 /* TODO: change to timestamp */
+                                .timestamp = win_getTime() 
                             }
                         };
 
@@ -461,6 +499,8 @@ WININT int __win_waitEvents_x11(t_event *event) {
 }
 
 
+WININT int __win_isCoalescable_x11(t_eventType);
+
 WININT int __win_pushEvents_x11(t_event *event) {
     /* null-check... */
     if (!event) { return (0); }
@@ -472,11 +512,27 @@ WININT int __win_pushEvents_x11(t_event *event) {
         if (!WINDOW->da_event.arr) { return (0); }
     }
 
+    /* tail-coalescing... */
+    if (WINDOW->da_event.cnt > 0) {
+        t_event *tail = &WINDOW->da_event.arr[WINDOW->da_event.cnt - 1];
+        if (tail->type == event->type && __win_isCoalescable_x11(event->type)) {
+            *tail = *event;
+            return (1);
+        }
+    }
+
     /* copy-assignment event object to event queue... */
     WINDOW->da_event.arr[WINDOW->da_event.cnt++] = *event;
 
     /* success */
     return (1);
+}
+
+WININT int __win_isCoalescable_x11(t_eventType type) {
+    const uint64_t coalescable = 
+        (1U << WINDOW_EVENT_NONE);
+
+    return ((coalescable >> type) & 1);
 }
 
 
@@ -518,6 +574,9 @@ WININT int __win_flush_x11(void) {
 #
 #  /* WINDOW_PLATFORM_WAYLAND - Unix Wayland implementation layer */
 #  if defined (WINDOW_PLATFORM_WAYLAND)
+#   include <unistd.h>
+#   include <sys/time.h>
+#
 #   include <wayland-util.h>
 #   include <wayland-version.h>
 #   include <wayland-client.h>
