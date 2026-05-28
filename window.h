@@ -959,10 +959,10 @@ WINDEF int win_eventpush(t_event *event) {
     /* tail-coalescing... */
     if (WINDOW->da_event.cnt > 0) {
         t_event *tail = &WINDOW->da_event.arr[WINDOW->da_event.cnt - 1];
-        if (tail->type == event->type && __win_coalescable_x11(event->type)) {
-            if (type == WINDOW_EVENT_MOUSE_MOTION  ||
-                type == WINDOW_EVENT_WINDOW_MOTION ||
-                type == WINDOW_EVENT_WINDOW_RESIZE
+        if (tail->type == event->type) {
+            if (tail->type == WINDOW_EVENT_MOUSE_MOTION  ||
+                tail->type == WINDOW_EVENT_WINDOW_MOTION ||
+                tail->type == WINDOW_EVENT_WINDOW_RESIZE
             ) {
                 *tail = *event;
                 return (1);
@@ -1506,9 +1506,9 @@ WINDEF int win_eventpush(t_event *event) {
     if (WINDOW->da_event.cnt > 0) {
         t_event *tail = &WINDOW->da_event.arr[WINDOW->da_event.cnt - 1];
         if (tail->type == event->type && __win_coalescable_x11(event->type)) {
-            if (type == WINDOW_EVENT_MOUSE_MOTION  ||
-                type == WINDOW_EVENT_WINDOW_MOTION ||
-                type == WINDOW_EVENT_WINDOW_RESIZE
+            if (tail->type == WINDOW_EVENT_MOUSE_MOTION  ||
+                tail->type == WINDOW_EVENT_WINDOW_MOTION ||
+                tail->type == WINDOW_EVENT_WINDOW_RESIZE
             ) {
                 *tail = *event;
                 return (1);
