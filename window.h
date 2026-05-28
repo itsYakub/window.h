@@ -71,6 +71,8 @@ WINDEF int win_init(void);
 
 WINDEF int win_quit(void);
 
+WINDEF int win_getsize(size_t *, size_t *);
+
 WINDEF void *win_getprop(const uint64_t);
 
 /* windowing functions */
@@ -303,6 +305,9 @@ WINDEF int win_init(void) {
 
 
 WINDEF int win_quit(void) {
+    /* null-check... */
+    if (!WINDOW) { return (0); }
+
     /* deallocate all the windows... */
     for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
         if (!WINDOW->da_window.arr[i]) { continue; }
@@ -328,6 +333,23 @@ WINDEF int win_quit(void) {
 
     /* success */
     return (1);
+}
+
+
+WINDEF int win_getsize(size_t *w_ptr, size_t *h_ptr) {
+    /* null-check... */
+    if (!WINDOW) { return (0); }
+
+    /* query attributes */
+    XWindowAttributes attr;
+    if (!XGetWindowAttributes(WINDOW->xlib.dpy, WINDOW->xlib.r_id, &attr)) { return (0); }
+    
+    /* assign values */
+    if (w_ptr) { *w_ptr = attr.width; }
+    if (h_ptr) { *h_ptr = attr.height; }
+
+    /* success */
+	return (1);
 }
 
 
@@ -373,6 +395,11 @@ struct s_window {
 };
 
 WINDEF int win_create(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
+    /* NOTE:
+     *  Temporarily disabled parameter
+     * */
+    (void) f;
+
     /* null-check... */
     if (!win) { return (0); }
 
