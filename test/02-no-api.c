@@ -1,6 +1,5 @@
 #include <stdio.h>
 #
-#include <string.h>
 #include <X11/Xlib.h>
 #
 #define WINDOW_IMPLEMENTATION
@@ -23,14 +22,19 @@ int main(void) {
     XID w_id = *(XID *) win_getwinprop(window, WINDOW_PROP_WINDOW_X11_WINDOW_ID);
     Visual *visual = win_getwinprop(window, WINDOW_PROP_WINDOW_X11_VISUAL);
 
+    /* get monitor size */
+    size_t width  = 0,
+           height = 0;
+    win_getsize(&width, &height);
+
     /* create buffer */
-    uint32_t *buffer = malloc(800 * 600 * sizeof(uint32_t));
+    uint32_t *buffer = malloc(width * height * sizeof(uint32_t));
     if (!buffer) {
         return (1);
     }
 
     /* create bitmap */
-    XImage *bitmap = XCreateImage(dpy, visual, 24, ZPixmap, 0, (char *) buffer, 800, 600, 32, 800 * sizeof(uint32_t));
+    XImage *bitmap = XCreateImage(dpy, visual, 24, ZPixmap, 0, (char *) buffer, width, height, 32, width * sizeof(uint32_t));
     if (!bitmap) {
         return (1);
     }
@@ -40,13 +44,18 @@ int main(void) {
 
     int exit = 0;
     while (!exit) {
+        /* get window size */
+        size_t width  = 0,
+               height = 0;
+        win_getwinsize(window, &width, &height);
+
         /* set the background color */
-        for (size_t i = 0; i < 800 * 600; i++) {
+        for (size_t i = 0; i < width * height; i++) {
             buffer[i] = 0xff191919; /* equivalent of: (1.0f, 0.1, 0.1, 0.1) */
         }
 
         /* display */
-        XPutImage(dpy, w_id, gc, bitmap, 0, 0, 0, 0, 800, 600);
+        XPutImage(dpy, w_id, gc, bitmap, 0, 0, 0, 0, width, height);
 
         /* poll events */
         t_event event = { 0 };
