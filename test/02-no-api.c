@@ -11,7 +11,7 @@ int main(void) {
    
     /* create window */
     t_window window = 0;
-    win_create(&window, 800, 600, "02 - no API", 0);
+    win_createwin(&window, 800, 600, "02 - no API", 0);
     if (!window) {
         return (1);
     }
@@ -72,7 +72,7 @@ int main(void) {
     /* quit */
     XFreeGC(dpy, gc), gc = 0;
     XDestroyImage(bitmap), bitmap = 0;
-    win_destroy(window), window = 0;
+    win_destroywin(window), window = 0;
     win_quit();
     return (0);
 }

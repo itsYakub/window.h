@@ -37,7 +37,7 @@ int main(void) {
    
     /* create window */
     t_window window = 0;
-    win_create(&window, 800, 600, "03 - egl", 0);
+    win_createwin(&window, 800, 600, "03 - egl", 0);
     win_map(window);
     
     /* query EGL display */
@@ -103,7 +103,7 @@ int main(void) {
     eglDestroySurface(egl.dpy, egl.surface);
     eglTerminate(egl.dpy);
 
-    win_destroy(window), window = 0;
+    win_destroywin(window), window = 0;
     win_quit();
     return (0);
 }
