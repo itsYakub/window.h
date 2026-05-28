@@ -61,6 +61,9 @@ enum {
     WINDOW_PROP_PLATFORM_X11_ROOT_ID,
 # define WINDOW_PROP_PLATFORM_X11_ROOT_ID WINDOW_PROP_PLATFORM_X11_ROOT_ID
 
+    WINDOW_PROP_PLATFORM_X11_SCREEN_ID,
+# define WINDOW_PROP_PLATFORM_X11_SCREEN_ID WINDOW_PROP_PLATFORM_X11_SCREEN_ID
+
     /* ... */
 };
 
@@ -84,8 +87,14 @@ enum {
     WINDOW_PROP_WINDOW_X11_ROOT_ID,
 # define WINDOW_PROP_WINDOW_X11_ROOT_ID WINDOW_PROP_WINDOW_X11_ROOT_ID
 
+    WINDOW_PROP_WINDOW_X11_SCREEN_ID,
+# define WINDOW_PROP_WINDOW_X11_SCREEN_ID WINDOW_PROP_WINDOW_X11_SCREEN_ID
+
     WINDOW_PROP_WINDOW_X11_WINDOW_ID,
-# define WINDOW_PROP_WINDOW_X11_ROOT_ID WINDOW_PROP_WINDOW_X11_ROOT_ID
+# define WINDOW_PROP_WINDOW_X11_WINDOW_ID WINDOW_PROP_WINDOW_X11_WINDOW_ID
+
+    WINDOW_PROP_WINDOW_X11_VISUAL,
+# define WINDOW_PROP_WINDOW_X11_VISUAL WINDOW_PROP_WINDOW_X11_VISUAL
 
     /* ... */
 };
@@ -302,8 +311,9 @@ WINDEF int win_quit(void) {
 
 WINDEF void *win_getPlatformProperty(const uint64_t prop) {
     switch (prop) {
-        case (WINDOW_PROP_PLATFORM_X11_DISPLAY): { return (WINDOW->xlib.dpy);  }
-        case (WINDOW_PROP_PLATFORM_X11_ROOT_ID): { return (&WINDOW->xlib.r_id); }
+        case (WINDOW_PROP_PLATFORM_X11_DISPLAY):   { return (WINDOW->xlib.dpy); }
+        case (WINDOW_PROP_PLATFORM_X11_ROOT_ID):   { return (&WINDOW->xlib.r_id); }
+        case (WINDOW_PROP_PLATFORM_X11_SCREEN_ID): { return (&WINDOW->xlib.s_id); }
 
         default: { } break;
     }
@@ -494,9 +504,11 @@ WINDEF int win_unmap(t_window win) {
 
 WINDEF void *win_getWindowProperty(t_window win, const uint64_t prop) {
     switch (prop) {
-        case (WINDOW_PROP_WINDOW_X11_DISPLAY):   { return (win->xlib.dpy);  }
+        case (WINDOW_PROP_WINDOW_X11_DISPLAY):   { return (win->xlib.dpy); }
         case (WINDOW_PROP_WINDOW_X11_ROOT_ID):   { return (&win->xlib.r_id); }
+        case (WINDOW_PROP_WINDOW_X11_SCREEN_ID): { return (&win->xlib.s_id); }
         case (WINDOW_PROP_WINDOW_X11_WINDOW_ID): { return (&win->xlib.w_id); }
+        case (WINDOW_PROP_WINDOW_X11_VISUAL):    { return (win->xutil.visual.visual); }
 
         default: { } break;
     }
