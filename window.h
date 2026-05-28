@@ -19,6 +19,10 @@
 # if defined (__linux__)
 #  define WINDOW_PLATFORM "linux"
 #  define WINDOW_PLATFORM_LINUX 1
+#  /* define default backend if none is defined... */
+#  if !defined (WINDOW_BACKEND_X11) && !defined (WINDOW_BACKEND_WAYLAND)
+#   define WINDOW_BACKEND_X11 1 /* by default window.h picks X11 for *nix platforms... */
+#  endif
 #
 # elif defined (__APPLE__) || defined (__MACH__)
 #  define WINDOW_PLATFORM "apple"
@@ -31,6 +35,10 @@
 # elif defined (__FreeBSD__) || defined (__NetBSD__) || defined (__bsdi__) || defined (__DragonFly__) || defined (__MidnightBSD__)
 #  define WINDOW_PLATFORM "bsd"
 #  define WINDOW_PLATFORM_BSD 1
+#  /* define default backend if none is defined... */
+#  if !defined (WINDOW_BACKEND_X11) && !defined (WINDOW_BACKEND_WAYLAND)
+#   define WINDOW_BACKEND_X11 1 /* by default window.h picks X11 for *nix platforms... */
+#  endif
 #
 # else
 #  error /* No valid platform found... */
@@ -41,11 +49,46 @@
 
 /* library functions */
 
+enum {
+    WINDOW_PROP_PLATFORM_NONE = 0,
+# define WINDOW_PROP_PLATFORM_NONE WINDOW_PROP_PLATFORM_NONE
+
+    /* X11 properties... */
+
+    WINDOW_PROP_PLATFORM_X11_DISPLAY,
+# define WINDOW_PROP_PLATFORM_X11_DISPLAY WINDOW_PROP_PLATFORM_X11_DISPLAY
+
+    WINDOW_PROP_PLATFORM_X11_ROOT_ID,
+# define WINDOW_PROP_PLATFORM_X11_ROOT_ID WINDOW_PROP_PLATFORM_X11_ROOT_ID
+
+    /* ... */
+};
+
 WINDEF int win_init(void);
 
 WINDEF int win_quit(void);
 
+WINDEF void *win_getPlatformProperty(const uint64_t);
+
 /* windowing functions */
+
+enum {
+    WINDOW_PROP_WINDOW_NONE = 0,
+# define WINDOW_PROP_WINDOW_NONE WINDOW_PROP_WINDOW_NONE
+
+    /* X11 properties... */
+
+    WINDOW_PROP_WINDOW_X11_DISPLAY,
+# define WINDOW_PROP_WINDOW_X11_DISPLAY WINDOW_PROP_WINDOW_X11_DISPLAY
+
+    WINDOW_PROP_WINDOW_X11_ROOT_ID,
+# define WINDOW_PROP_WINDOW_X11_ROOT_ID WINDOW_PROP_WINDOW_X11_ROOT_ID
+
+    WINDOW_PROP_WINDOW_X11_WINDOW_ID,
+# define WINDOW_PROP_WINDOW_X11_ROOT_ID WINDOW_PROP_WINDOW_X11_ROOT_ID
+
+    /* ... */
+};
 
 typedef struct s_window *t_window;
 
@@ -57,11 +100,11 @@ WINDEF int win_map(t_window);
 
 WINDEF int win_unmap(t_window);
 
+WINDEF void *win_getWindowProperty(t_window, const uint64_t);
+
 /* event functions */
 
-typedef enum e_eventType t_eventType;
-
-enum e_eventType {
+enum {
 
     WINDOW_EVENT_NONE = 0,
 # define WINDOW_EVENT_NONE WINDOW_EVENT_NONE
@@ -129,8 +172,8 @@ WINDEF int win_waitTime(uint64_t);
 #
 #  include <stdlib.h>
 #
-#  /* WINDOW_PLATFORM_X11 - Unix X11 implementation layer */
-#  if defined (WINDOW_PLATFORM_X11)
+#  /* WINDOW_BACKEND_X11 - Unix X11 implementation layer */
+#  if defined (WINDOW_BACKEND_X11)
 #   include <unistd.h>
 #   include <sys/time.h>
 #
@@ -172,115 +215,7 @@ struct s_platform {
 
 static struct s_platform *WINDOW = 0; 
 
-WININT int __win_init_x11(void);
-
-WININT int __win_quit_x11(void);
-
-
-WINDEF int win_init(void) { return (__win_init_x11()); }
-
-
-WINDEF int win_quit(void) { return (__win_quit_x11()); }
-
-/* windowing functions */
-
-struct s_window {
-    struct {
-        Display *dpy;   /* display pointer */
-        XID      r_id;  /* root window's ID */
-        XID      s_id;  /* screen's ID */
-        XID      w_id;  /* this window's ID */
-    } xlib;
-    
-    struct {
-        Atom wm_protocols;
-        Atom wm_delete_window;
-    } xatom;
-
-    struct {
-        XVisualInfo visual;
-    } xutil;
-
-    struct {
-        /* position attributes... */
-        size_t x, y;
-
-        /* dimension attributes... */
-        size_t w, h;
-    } attr;
-};
-
-WININT int __win_create_x11(t_window *, const size_t, const size_t, const char *, const uint64_t);
-
-WININT int __win_destroy_x11(t_window);
-
-WININT int __win_map_x11(t_window);
-
-WININT int __win_unmap_x11(t_window);
-
-
-WINDEF int win_create(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) { return (__win_create_x11(win, w, h, t, f)); }
-
-
-WINDEF int win_destroy(t_window win) { return (__win_destroy_x11(win)); }
-
-
-WINDEF int win_map(t_window win) { return (__win_map_x11(win)); }
-
-
-WINDEF int win_unmap(t_window win) { return (__win_unmap_x11(win)); }
-
-/* event functions */
-
-WININT int __win_pollEvents_x11(t_event *);
-
-WININT int __win_waitEvents_x11(t_event *);
-
-WININT int __win_pushEvents_x11(t_event *);
-
-WININT int __win_popEvents_x11(t_event *);
-
-WININT int __win_flush_x11(void);
-
-
-WINDEF int win_pollEvents(t_event *event) { return (__win_pollEvents_x11(event)); }
-
-
-WINDEF int win_waitEvents(t_event *event) { return (__win_waitEvents_x11(event)); }
-
-
-WINDEF int win_pushEvents(t_event *event) { return (__win_pushEvents_x11(event)); }
-
-
-WINDEF int win_popEvents(t_event *event) { return (__win_popEvents_x11(event)); }
-
-
-WINDEF int win_flush(void) { return (__win_flush_x11()); }
-
-/* timing functions */
-
-WINDEF uint64_t win_getTime(void) {
-    struct timeval t;
-    if (gettimeofday(&t, 0) == -1) {
-        return (0);
-    }
-
-    return (t.tv_sec * 1000 + t.tv_usec / 1000);
-}
-
-
-WINDEF int win_waitTime(uint64_t ms) {
-    uint64_t t = win_getTime();
-    if (t == 0) { return (0); }
-
-    while ((win_getTime() - t) < ms);
-    return (1);
-}
-
-
-/* platform functions */
-
-WININT int __win_init_x11(void) {
+WINDEF int win_init(void) {
     /* manage global platform object... */
     if (WINDOW) { return (1); } /* check if `WINDOW` is not null. If so, return... */
 
@@ -336,7 +271,7 @@ WININT int __win_init_x11(void) {
 }
 
 
-WININT int __win_quit_x11(void) {
+WINDEF int win_quit(void) {
     /* deallocate all the windows... */
     for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
         if (!WINDOW->da_window.arr[i]) { continue; }
@@ -364,9 +299,48 @@ WININT int __win_quit_x11(void) {
     return (1);
 }
 
+
+WINDEF void *win_getPlatformProperty(const uint64_t prop) {
+    switch (prop) {
+        case (WINDOW_PROP_PLATFORM_X11_DISPLAY): { return (WINDOW->xlib.dpy);  }
+        case (WINDOW_PROP_PLATFORM_X11_ROOT_ID): { return (&WINDOW->xlib.r_id); }
+
+        default: { } break;
+    }
+
+    /* return nothing... */
+    return (0);
+}
+
 /* windowing functions */
 
-WININT int __win_create_x11(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
+struct s_window {
+    struct {
+        Display *dpy;   /* display pointer */
+        XID      r_id;  /* root window's ID */
+        XID      s_id;  /* screen's ID */
+        XID      w_id;  /* this window's ID */
+    } xlib;
+    
+    struct {
+        Atom wm_protocols;
+        Atom wm_delete_window;
+    } xatom;
+
+    struct {
+        XVisualInfo visual;
+    } xutil;
+
+    struct {
+        /* position attributes... */
+        size_t x, y;
+
+        /* dimension attributes... */
+        size_t w, h;
+    } attr;
+};
+
+WINDEF int win_create(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
     /* null-check... */
     if (!win) { return (0); }
 
@@ -471,7 +445,7 @@ WININT int __win_create_x11(t_window *win, const size_t w, const size_t h, const
 }
 
 
-WININT int __win_destroy_x11(t_window win) {
+WINDEF int win_destroy(t_window win) {
     /* null-check... */
     if (!win) { return (0); }
 
@@ -494,7 +468,7 @@ WININT int __win_destroy_x11(t_window win) {
 }
 
 
-WININT int __win_map_x11(t_window win) {
+WINDEF int win_map(t_window win) {
     /* null-check... */
     if (!win)            { return (0); }
     if (!win->xlib.w_id) { return (0); }
@@ -506,7 +480,7 @@ WININT int __win_map_x11(t_window win) {
 }
 
 
-WININT int __win_unmap_x11(t_window win) {
+WINDEF int win_unmap(t_window win) {
     /* null-check... */
     if (!win)            { return (0); }
     if (!win->xlib.w_id) { return (0); }
@@ -517,11 +491,25 @@ WININT int __win_unmap_x11(t_window win) {
     return (1);
 }
 
+
+WINDEF void *win_getWindowProperty(t_window win, const uint64_t prop) {
+    switch (prop) {
+        case (WINDOW_PROP_WINDOW_X11_DISPLAY):   { return (win->xlib.dpy);  }
+        case (WINDOW_PROP_WINDOW_X11_ROOT_ID):   { return (&win->xlib.r_id); }
+        case (WINDOW_PROP_WINDOW_X11_WINDOW_ID): { return (&win->xlib.w_id); }
+
+        default: { } break;
+    }
+
+    /* return nothing... */
+    return (0);
+}
+
 /* event functions */
 
-WININT int __win_eventLoop_x11(void);
+WININT int __win_pollEvents_x11(void);
 
-WININT int __win_pollEvents_x11(t_event *event) {
+WINDEF int win_pollEvents(t_event *event) {
     /* null-check... */
     if (!event) { return (0); }
 
@@ -529,7 +517,7 @@ WININT int __win_pollEvents_x11(t_event *event) {
     if (win_popEvents(event)) { return (1); }
 
     /* handle platform events... */
-    __win_eventLoop_x11();
+    __win_pollEvents_x11();
 
     /* no events in the queue...
      * ...it usually means we can break from a loop that iterates until there's no event in the queue left...
@@ -542,8 +530,8 @@ WININT int __win_pollEvents_x11(t_event *event) {
 
     return (0);
 }
-
-WININT int __win_eventLoop_x11(void) {
+    
+WININT int __win_pollEvents_x11(void) {
     XEvent xevent = { 0 };
     while (XPending(WINDOW->xlib.dpy)) {
         XNextEvent(WINDOW->xlib.dpy, &xevent);
@@ -694,7 +682,7 @@ WININT int __win_eventLoop_x11(void) {
 }
 
 
-WININT int __win_waitEvents_x11(t_event *event) {
+WINDEF int win_waitEvents(t_event *event) {
     /* null-check... */
     if (!event) { return (0); }
 
@@ -703,9 +691,9 @@ WININT int __win_waitEvents_x11(t_event *event) {
 }
 
 
-WININT int __win_isCoalescable_x11(t_eventType);
+WININT int __win_isCoalescable_x11(const uint64_t);
 
-WININT int __win_pushEvents_x11(t_event *event) {
+WINDEF int win_pushEvents(t_event *event) {
     /* null-check... */
     if (!event) { return (0); }
 
@@ -732,14 +720,14 @@ WININT int __win_pushEvents_x11(t_event *event) {
     return (1);
 }
 
-WININT int __win_isCoalescable_x11(t_eventType type) {
+WININT int __win_isCoalescable_x11(const uint64_t type) {
     return (type == WINDOW_EVENT_MOUSE_MOTION ||
             type == WINDOW_EVENT_WINDOW_MOTION ||
             type == WINDOW_EVENT_WINDOW_RESIZE);
 }
 
 
-WININT int __win_popEvents_x11(t_event *event) {
+WINDEF int win_popEvents(t_event *event) {
     /* null-check... */
     if (!event) { return (0); }
 
@@ -766,17 +754,37 @@ WININT int __win_popEvents_x11(t_event *event) {
 }
 
 
-WININT int __win_flush_x11(void) {
+WINDEF int win_flush(void) {
     if (!XFlush(WINDOW->xlib.dpy)) { return (0); }
 
     /* success */
     return (1);
 }
 
-#  endif /* WINDOW_PLATFORM_X11 */
+/* timing functions */
+
+WINDEF uint64_t win_getTime(void) {
+    struct timeval t;
+    if (gettimeofday(&t, 0) == -1) {
+        return (0);
+    }
+
+    return (t.tv_sec * 1000 + t.tv_usec / 1000);
+}
+
+
+WINDEF int win_waitTime(uint64_t ms) {
+    uint64_t t = win_getTime();
+    if (t == 0) { return (0); }
+
+    while ((win_getTime() - t) < ms);
+    return (1);
+}
+
+#  endif /* WINDOW_BACKEND_X11 */
 #
-#  /* WINDOW_PLATFORM_WAYLAND - Unix Wayland implementation layer */
-#  if defined (WINDOW_PLATFORM_WAYLAND)
+#  /* WINDOW_BACKEND_WAYLAND - Unix Wayland implementation layer */
+#  if defined (WINDOW_BACKEND_WAYLAND)
 #   include <unistd.h>
 #   include <sys/time.h>
 #
@@ -788,7 +796,7 @@ WININT int __win_flush_x11(void) {
 
 /* ... */
 
-#  endif /* WINDOW_PLATFORM_WAYLAND */
+#  endif /* WINDOW_BACKEND_WAYLAND */
 #
 #  /* WINDOW_PLATFORM_WIN32 - Windows Win32 implementation layer */
 #  if defined (WINDOW_PLATFORM_WIN32)

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #
-#define WINDOW_PLATFORM_X11
 #define WINDOW_IMPLEMENTATION
 #include "./../window.h"
 
