@@ -12,7 +12,7 @@ int main(void) {
 
     /* create window */
     t_window window = 0;
-    if (!win_create(&window, 800, 600, "Hello, window.h", 0)) {
+    if (!win_create(&window, 800, 600, "01 - basic", 0)) {
         fprintf(stderr, "win_create() failed\n");
 
         win_quit();
