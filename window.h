@@ -103,37 +103,37 @@ enum {
 
 typedef struct s_window *t_window;
 
-WINDEF int win_createwin(t_window *, const size_t, const size_t, const char *, const uint64_t);
+WINDEF int win_wincreate(t_window *, const size_t, const size_t, const char *, const uint64_t);
 
-WINDEF int win_destroywin(t_window);
+WINDEF int win_windestroy(t_window);
 
-WINDEF int win_map(t_window);
+WINDEF int win_winmap(t_window);
 
-WINDEF int win_unmap(t_window);
+WINDEF int win_winunmap(t_window);
 
-WINDEF int win_getwinsize(t_window, size_t *, size_t *);
+WINDEF int win_wingetsize(t_window, size_t *, size_t *);
 
-WINDEF int win_setwinsize(t_window, const size_t, const size_t);
+WINDEF int win_winsetsize(t_window, const size_t, const size_t);
 
-WINDEF int win_setwinsizemin(t_window, const size_t, const size_t);
+WINDEF int win_winsetsizemin(t_window, const size_t, const size_t);
 
-WINDEF int win_setwinsizemax(t_window, const size_t, const size_t);
+WINDEF int win_winsetsizemax(t_window, const size_t, const size_t);
 
-WINDEF int win_getwinpos(t_window, size_t *, size_t *);
+WINDEF int win_wingetpos(t_window, size_t *, size_t *);
 
-WINDEF int win_setwinpos(t_window, const size_t, const size_t);
+WINDEF int win_winsetpos(t_window, const size_t, const size_t);
 
-WINDEF int win_setwinminim(t_window);
+WINDEF int win_winsetminim(t_window);
 
-WINDEF int win_setwinmaxim(t_window);
+WINDEF int win_winsetmaxim(t_window);
 
-WINDEF int win_setwinfullscr(t_window);
+WINDEF int win_winsetfullscr(t_window);
 
-WINDEF int win_getwintitle(t_window, char **);
+WINDEF int win_wingettitle(t_window, char **);
 
-WINDEF int win_setwintitle(t_window, const char *);
+WINDEF int win_winsettitle(t_window, const char *);
 
-WINDEF void *win_getwinprop(t_window, const uint64_t);
+WINDEF void *win_wingetprop(t_window, const uint64_t);
 
 /* event functions */
 
@@ -312,7 +312,7 @@ WINDEF int win_quit(void) {
     for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
         if (!WINDOW->da_window.arr[i]) { continue; }
 
-        win_destroywin(WINDOW->da_window.arr[i]);
+        win_windestroy(WINDOW->da_window.arr[i]);
     }
 
     free(WINDOW->da_window.arr);
@@ -396,7 +396,7 @@ struct s_window {
     } attr;
 };
 
-WINDEF int win_createwin(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
+WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -507,7 +507,7 @@ WINDEF int win_createwin(t_window *win, const size_t w, const size_t h, const ch
 }
 
 
-WINDEF int win_destroywin(t_window win) {
+WINDEF int win_windestroy(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -531,7 +531,7 @@ WINDEF int win_destroywin(t_window win) {
 }
 
 
-WINDEF int win_map(t_window win) {
+WINDEF int win_winmap(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -543,7 +543,7 @@ WINDEF int win_map(t_window win) {
 }
 
 
-WINDEF int win_unmap(t_window win) {
+WINDEF int win_winunmap(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -555,7 +555,7 @@ WINDEF int win_unmap(t_window win) {
 }
 
 
-WINDEF int win_getwinsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
+WINDEF int win_wingetsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -573,7 +573,7 @@ WINDEF int win_getwinsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
 }
 
 
-WINDEF int win_setwinsize(t_window win, const size_t w, const size_t h) {
+WINDEF int win_winsetsize(t_window win, const size_t w, const size_t h) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -586,7 +586,7 @@ WINDEF int win_setwinsize(t_window win, const size_t w, const size_t h) {
 }
 
 
-WINDEF int win_setwinsizemin(t_window win, const size_t w, const size_t h) {
+WINDEF int win_winsetsizemin(t_window win, const size_t w, const size_t h) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -607,7 +607,7 @@ WINDEF int win_setwinsizemin(t_window win, const size_t w, const size_t h) {
 }
 
 
-WINDEF int win_setwinsizemax(t_window win, const size_t w, const size_t h) {
+WINDEF int win_winsetsizemax(t_window win, const size_t w, const size_t h) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -628,7 +628,7 @@ WINDEF int win_setwinsizemax(t_window win, const size_t w, const size_t h) {
 }
 
 
-WINDEF int win_getwinpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
+WINDEF int win_wingetpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -646,7 +646,7 @@ WINDEF int win_getwinpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
 }
 
 
-WINDEF int win_setwinpos(t_window win, const size_t x, const size_t y) {
+WINDEF int win_winsetpos(t_window win, const size_t x, const size_t y) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -667,7 +667,7 @@ WINDEF int win_setwinpos(t_window win, const size_t x, const size_t y) {
 }
 
 
-WINDEF int win_setwinminim(t_window win) {
+WINDEF int win_winsetminim(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -679,7 +679,7 @@ WINDEF int win_setwinminim(t_window win) {
 }
 
 
-WINDEF int win_setwinmaxim(t_window win) {
+WINDEF int win_winsetmaxim(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -691,7 +691,7 @@ WINDEF int win_setwinmaxim(t_window win) {
 }
 
 
-WINDEF int win_setwinfullscr(t_window win) {
+WINDEF int win_winsetfullscr(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -703,7 +703,7 @@ WINDEF int win_setwinfullscr(t_window win) {
 }
 
 
-WINDEF int win_getwintitle(t_window win, char **t_ptr) {
+WINDEF int win_wingettitle(t_window win, char **t_ptr) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -720,7 +720,7 @@ WINDEF int win_getwintitle(t_window win, char **t_ptr) {
 }
 
 
-WINDEF int win_setwintitle(t_window win, const char *t) {
+WINDEF int win_winsettitle(t_window win, const char *t) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -735,7 +735,7 @@ WINDEF int win_setwintitle(t_window win, const char *t) {
 }
 
 
-WINDEF void *win_getwinprop(t_window win, const uint64_t prop) {
+WINDEF void *win_wingetprop(t_window win, const uint64_t prop) {
     /* null-check... */
     if (!WINDOW)  { return (0); }
     if (!win)     { return (0); }
@@ -1120,7 +1120,7 @@ WINDEF int win_quit(void) {
     for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
         if (!WINDOW->da_window.arr[i]) { continue; }
 
-        win_destroywin(WINDOW->da_window.arr[i]);
+        win_windestroy(WINDOW->da_window.arr[i]);
     }
 
     free(WINDOW->da_window.arr);
@@ -1189,7 +1189,7 @@ struct s_window {
     } attr;
 };
 
-WINDEF int win_createwin(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
+WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1239,7 +1239,7 @@ WINDEF int win_createwin(t_window *win, const size_t w, const size_t h, const ch
 }
 
 
-WINDEF int win_destroywin(t_window win) {
+WINDEF int win_windestroy(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1263,7 +1263,7 @@ WINDEF int win_destroywin(t_window win) {
 }
 
 
-WINDEF int win_map(t_window win) {
+WINDEF int win_winmap(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1278,7 +1278,7 @@ WINDEF int win_map(t_window win) {
 }
 
 
-WINDEF int win_unmap(t_window win) {
+WINDEF int win_winunmap(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1293,7 +1293,7 @@ WINDEF int win_unmap(t_window win) {
 }
 
 
-WINDEF int win_getwinsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
+WINDEF int win_wingetsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1309,7 +1309,7 @@ WINDEF int win_getwinsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
 }
 
 
-WINDEF int win_setwinsize(t_window win, const size_t w, const size_t h) {
+WINDEF int win_winsetsize(t_window win, const size_t w, const size_t h) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1321,7 +1321,7 @@ WINDEF int win_setwinsize(t_window win, const size_t w, const size_t h) {
 }
 
 
-WINDEF int win_setwinsizemin(t_window win, const size_t w, const size_t h) {
+WINDEF int win_winsetsizemin(t_window win, const size_t w, const size_t h) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1333,7 +1333,7 @@ WINDEF int win_setwinsizemin(t_window win, const size_t w, const size_t h) {
 }
 
 
-WINDEF int win_setwinsizemax(t_window win, const size_t w, const size_t h) {
+WINDEF int win_winsetsizemax(t_window win, const size_t w, const size_t h) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1345,7 +1345,7 @@ WINDEF int win_setwinsizemax(t_window win, const size_t w, const size_t h) {
 }
 
 
-WINDEF int win_getwinpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
+WINDEF int win_wingetpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1361,7 +1361,7 @@ WINDEF int win_getwinpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
 }
 
 
-WINDEF int win_setwinpos(t_window win, const size_t x, const size_t y) {
+WINDEF int win_winsetpos(t_window win, const size_t x, const size_t y) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1373,7 +1373,7 @@ WINDEF int win_setwinpos(t_window win, const size_t x, const size_t y) {
 }
 
 
-WINDEF int win_setwinminim(t_window win) {
+WINDEF int win_winsetminim(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1385,7 +1385,7 @@ WINDEF int win_setwinminim(t_window win) {
 }
 
 
-WINDEF int win_setwinmaxim(t_window win) {
+WINDEF int win_winsetmaxim(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1397,7 +1397,7 @@ WINDEF int win_setwinmaxim(t_window win) {
 }
 
 
-WINDEF int win_setwinfullscr(t_window win) {
+WINDEF int win_winsetfullscr(t_window win) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1409,7 +1409,7 @@ WINDEF int win_setwinfullscr(t_window win) {
 }
 
 
-WINDEF int win_getwintitle(t_window win, char **t_ptr) {
+WINDEF int win_wingettitle(t_window win, char **t_ptr) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1423,7 +1423,7 @@ WINDEF int win_getwintitle(t_window win, char **t_ptr) {
 }
 
 
-WINDEF int win_setwintitle(t_window win, const char *t) {
+WINDEF int win_winsettitle(t_window win, const char *t) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1437,7 +1437,7 @@ WINDEF int win_setwintitle(t_window win, const char *t) {
 }
 
 
-WINDEF void *win_getwinprop(t_window win, const uint64_t prop) {
+WINDEF void *win_wingetprop(t_window win, const uint64_t prop) {
     /* null-check... */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }

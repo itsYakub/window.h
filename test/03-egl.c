@@ -37,11 +37,11 @@ int main(void) {
    
     /* create window */
     t_window window = 0;
-    win_createwin(&window, 800, 600, "03 - egl", 0);
-    win_map(window);
+    win_wincreate(&window, 800, 600, "03 - egl", 0);
+    win_winmap(window);
     
     /* query EGL display */
-    Display *dpy = win_getwinprop(window, WINDOW_PROP_WINDOW_X11_DISPLAY);
+    Display *dpy = win_wingetprop(window, WINDOW_PROP_WINDOW_X11_DISPLAY);
     egl.dpy = eglGetDisplay((EGLDisplay) dpy);
     if (egl.dpy == EGL_NO_DISPLAY) {
         return (1);
@@ -59,7 +59,7 @@ int main(void) {
     }
 
     /* create EGL surface */
-    XID w_id = *(XID *) win_getwinprop(window,WINDOW_PROP_WINDOW_X11_WINDOW_ID);
+    XID w_id = *(XID *) win_wingetprop(window,WINDOW_PROP_WINDOW_X11_WINDOW_ID);
     egl.surface = eglCreateWindowSurface(egl.dpy, egl.cfg, w_id, 0);
     if (egl.surface == EGL_NO_SURFACE) {
         return (1);
@@ -103,7 +103,7 @@ int main(void) {
     eglDestroySurface(egl.dpy, egl.surface);
     eglTerminate(egl.dpy);
 
-    win_destroywin(window), window = 0;
+    win_windestroy(window), window = 0;
     win_quit();
     return (0);
 }

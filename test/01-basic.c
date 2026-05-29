@@ -12,16 +12,16 @@ int main(void) {
 
     /* create window */
     t_window window = 0;
-    if (!win_createwin(&window, 800, 600, "01 - basic", 0)) {
-        fprintf(stderr, "win_createwin() failed\n");
+    if (!win_wincreate(&window, 800, 600, "01 - basic", 0)) {
+        fprintf(stderr, "win_wincreate() failed\n");
 
         win_quit();
         return (1);
     }
 
     /* map window onto the screen */
-    if (!win_map(window)) {
-        fprintf(stderr, "win_createwin() failed\n");
+    if (!win_winmap(window)) {
+        fprintf(stderr, "win_wincreate() failed\n");
 
         win_quit();
         return (1);
@@ -42,7 +42,7 @@ int main(void) {
     }
 
     /* quit */
-    win_destroywin(window), window = 0;
+    win_windestroy(window), window = 0;
     win_quit();
     return (0);
 }

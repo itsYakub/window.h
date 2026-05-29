@@ -11,16 +11,16 @@ int main(void) {
    
     /* create window */
     t_window window = 0;
-    win_createwin(&window, 800, 600, "02 - no API", 0);
+    win_wincreate(&window, 800, 600, "02 - no API", 0);
     if (!window) {
         return (1);
     }
-    win_map(window);
+    win_winmap(window);
 
     /* query properties */
-    Display *dpy = win_getwinprop(window, WINDOW_PROP_WINDOW_X11_DISPLAY);
-    XID w_id = *(XID *) win_getwinprop(window, WINDOW_PROP_WINDOW_X11_WINDOW_ID);
-    Visual *visual = win_getwinprop(window, WINDOW_PROP_WINDOW_X11_VISUAL);
+    Display *dpy = win_wingetprop(window, WINDOW_PROP_WINDOW_X11_DISPLAY);
+    XID w_id = *(XID *) win_wingetprop(window, WINDOW_PROP_WINDOW_X11_WINDOW_ID);
+    Visual *visual = win_wingetprop(window, WINDOW_PROP_WINDOW_X11_VISUAL);
 
     /* get monitor size */
     size_t width  = 0,
@@ -47,7 +47,7 @@ int main(void) {
         /* get window size */
         size_t width  = 0,
                height = 0;
-        win_getwinsize(window, &width, &height);
+        win_wingetsize(window, &width, &height);
 
         /* set the background color */
         for (size_t i = 0; i < width * height; i++) {
@@ -72,7 +72,7 @@ int main(void) {
     /* quit */
     XFreeGC(dpy, gc), gc = 0;
     XDestroyImage(bitmap), bitmap = 0;
-    win_destroywin(window), window = 0;
+    win_windestroy(window), window = 0;
     win_quit();
     return (0);
 }
