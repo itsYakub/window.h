@@ -47,6 +47,337 @@
 # include <stddef.h>
 # include <stdint.h>
 
+/* inputs */
+
+enum {
+    WINDOW_BUTTON_NONE = 0,
+# define WINDOW_BUTTON_NONE WINDOW_BUTTON_NONE
+
+    WINDOW_BUTTON_LEFT,
+# define WINDOW_BUTTON_LEFT WINDOW_BUTTON_LEFT
+
+    WINDOW_BUTTON_RIGHT,
+# define WINDOW_BUTTON_RIGHT WINDOW_BUTTON_RIGHT
+
+    WINDOW_BUTTON_MIDDLE,
+# define WINDOW_BUTTON_MIDDLE WINDOW_BUTTON_MIDDLE
+
+    /* ... */
+};
+
+enum {
+    WINDOW_KEY_NONE = 0,
+# define WINDOW_KEY_NONE WINDOW_KEY_NONE
+
+    WINDOW_KEY_ESCAPE = 0x100,
+# define WINDOW_KEY_ESCAPE WINDOW_KEY_ESCAPE
+
+    WINDOW_KEY_F1 = 0x101,
+# define WINDOW_KEY_F1 WINDOW_KEY_F1
+
+    WINDOW_KEY_F2 = 0x102,
+# define WINDOW_KEY_F2 WINDOW_KEY_F2
+
+    WINDOW_KEY_F3 = 0x103,
+# define WINDOW_KEY_F3 WINDOW_KEY_F3
+
+    WINDOW_KEY_F4 = 0x104,
+# define WINDOW_KEY_F4 WINDOW_KEY_F4
+
+    WINDOW_KEY_F5 = 0x105,
+# define WINDOW_KEY_F5 WINDOW_KEY_F5
+
+    WINDOW_KEY_F6 = 0x106,
+# define WINDOW_KEY_F6 WINDOW_KEY_F6
+
+    WINDOW_KEY_F7 = 0x107,
+# define WINDOW_KEY_F7 WINDOW_KEY_F7
+
+    WINDOW_KEY_F8 = 0x108,
+# define WINDOW_KEY_F8 WINDOW_KEY_F8
+
+    WINDOW_KEY_F9 = 0x109,
+# define WINDOW_KEY_F9 WINDOW_KEY_F9
+
+    WINDOW_KEY_F10 = 0x10A,
+# define WINDOW_KEY_F10 WINDOW_KEY_F10
+
+    WINDOW_KEY_F11 = 0x10B,
+# define WINDOW_KEY_F11 WINDOW_KEY_F11
+
+    WINDOW_KEY_F12 = 0x10C,
+# define WINDOW_KEY_F12 WINDOW_KEY_F12
+
+    WINDOW_KEY_GRAVE = 0x60,
+# define WINDOW_KEY_GRAVE WINDOW_KEY_GRAVE
+
+    WINDOW_KEY_ONE = 0x31,
+# define WINDOW_KEY_ONE WINDOW_KEY_ONE
+
+    WINDOW_KEY_TWO = 0x32,
+# define WINDOW_KEY_TWO WINDOW_KEY_TWO
+
+    WINDOW_KEY_THREE = 0x33,
+# define WINDOW_KEY_THREE WINDOW_KEY_THREE
+
+    WINDOW_KEY_FOUR = 0x34,
+# define WINDOW_KEY_FOUR WINDOW_KEY_FOUR
+
+    WINDOW_KEY_FIVE = 0x35,
+# define WINDOW_KEY_FIVE WINDOW_KEY_FIVE
+
+    WINDOW_KEY_SIX = 0x36,
+# define WINDOW_KEY_SIX WINDOW_KEY_SIX
+
+    WINDOW_KEY_SEVEN = 0x37,
+# define WINDOW_KEY_SEVEN WINDOW_KEY_SEVEN
+
+    WINDOW_KEY_EIGHT = 0x38,
+# define WINDOW_KEY_EIGHT WINDOW_KEY_EIGHT
+
+    WINDOW_KEY_NINE = 0x39,
+# define WINDOW_KEY_NINE WINDOW_KEY_NINE
+
+    WINDOW_KEY_ZERO = 0x30,
+# define WINDOW_KEY_ZERO WINDOW_KEY_ZERO
+
+    WINDOW_KEY_DASH = 0x2D,
+# define WINDOW_KEY_DASH WINDOW_KEY_DASH
+
+    WINDOW_KEY_EQUAL = 0x3D,
+# define WINDOW_KEY_EQUAL WINDOW_KEY_EQUAL
+
+    WINDOW_KEY_BACKSPACE = 0x08,
+# define WINDOW_KEY_BACKSPACE WINDOW_KEY_BACKSPACE
+
+    WINDOW_KEY_TAB = 0x09,
+# define WINDOW_KEY_TAB WINDOW_KEY_TAB
+
+    WINDOW_KEY_Q = 0x51,
+# define WINDOW_KEY_Q WINDOW_KEY_Q
+
+    WINDOW_KEY_W = 0x57,
+# define WINDOW_KEY_W WINDOW_KEY_W
+
+    WINDOW_KEY_E = 0x45,
+# define WINDOW_KEY_E WINDOW_KEY_E
+
+    WINDOW_KEY_R = 0x52,
+# define WINDOW_KEY_R WINDOW_KEY_R
+
+    WINDOW_KEY_T = 0x54,
+# define WINDOW_KEY_T WINDOW_KEY_T
+
+    WINDOW_KEY_Y = 0x59,
+# define WINDOW_KEY_Y WINDOW_KEY_Y
+
+    WINDOW_KEY_U = 0x55,
+# define WINDOW_KEY_U WINDOW_KEY_U
+
+    WINDOW_KEY_I = 0x49,
+# define WINDOW_KEY_I WINDOW_KEY_I
+
+    WINDOW_KEY_O = 0x4F,
+# define WINDOW_KEY_O WINDOW_KEY_O
+
+    WINDOW_KEY_P = 0x50,
+# define WINDOW_KEY_P WINDOW_KEY_P
+
+    WINDOW_KEY_OBRACE = 0x5B,
+# define WINDOW_KEY_OBRACE WINDOW_KEY_OBRACE
+
+    WINDOW_KEY_CBRACE = 0x5D,
+# define WINDOW_KEY_CBRACE WINDOW_KEY_CBRACE
+
+    WINDOW_KEY_CAPSLOCK = 0,
+# define WINDOW_KEY_CAPSLOCK WINDOW_KEY_CAPSLOCK
+
+    WINDOW_KEY_A = 0x41,
+# define WINDOW_KEY_A WINDOW_KEY_A
+
+    WINDOW_KEY_S = 0x53,
+# define WINDOW_KEY_S WINDOW_KEY_S
+
+    WINDOW_KEY_D = 0x44,
+# define WINDOW_KEY_D WINDOW_KEY_D
+
+    WINDOW_KEY_F = 0x46,
+# define WINDOW_KEY_F WINDOW_KEY_F
+
+    WINDOW_KEY_G = 0x47,
+# define WINDOW_KEY_G WINDOW_KEY_G
+
+    WINDOW_KEY_H = 0x48,
+# define WINDOW_KEY_H WINDOW_KEY_H
+
+    WINDOW_KEY_J = 0x4A,
+# define WINDOW_KEY_J WINDOW_KEY_J
+
+    WINDOW_KEY_K = 0x4B,
+# define WINDOW_KEY_K WINDOW_KEY_K
+
+    WINDOW_KEY_L = 0x4C,
+# define WINDOW_KEY_L WINDOW_KEY_L
+
+    WINDOW_KEY_SEMICOLON = 0x3B,
+# define WINDOW_KEY_SEMICOLON WINDOW_KEY_SEMICOLON
+
+    WINDOW_KEY_QUOTE = 0x27,
+# define WINDOW_KEY_QUOTE WINDOW_KEY_QUOTE
+
+    WINDOW_KEY_BACKSLASH = 0x5C,
+# define WINDOW_KEY_BACKSLASH WINDOW_KEY_BACKSLASH
+
+    WINDOW_KEY_ENTER = 0x0D,
+# define WINDOW_KEY_ENTER WINDOW_KEY_ENTER
+
+    WINDOW_KEY_LSHIFT = 0x120,
+# define WINDOW_KEY_LSHIFT WINDOW_KEY_LSHIFT
+
+    WINDOW_KEY_Z = 0x5A,
+# define WINDOW_KEY_Z WINDOW_KEY_Z
+
+    WINDOW_KEY_X = 0x58,
+# define WINDOW_KEY_X WINDOW_KEY_X
+
+    WINDOW_KEY_C = 0x43,
+# define WINDOW_KEY_C WINDOW_KEY_C
+
+    WINDOW_KEY_V = 0x56,
+# define WINDOW_KEY_V WINDOW_KEY_V
+
+    WINDOW_KEY_B = 0x42,
+# define WINDOW_KEY_B WINDOW_KEY_B
+
+    WINDOW_KEY_N = 0x4E,
+# define WINDOW_KEY_N WINDOW_KEY_N
+
+    WINDOW_KEY_M = 0x4D,
+# define WINDOW_KEY_M WINDOW_KEY_M
+
+    WINDOW_KEY_COMMA = 0x2C,
+# define WINDOW_KEY_COMMA WINDOW_KEY_COMMA
+
+    WINDOW_KEY_PERIOD = 0x2E,
+# define WINDOW_KEY_PERIOD WINDOW_KEY_PERIOD
+
+    WINDOW_KEY_SLASH = 0x2F,
+# define WINDOW_KEY_SLASH WINDOW_KEY_SLASH
+
+    WINDOW_KEY_RSHIFT = 0x121,
+# define WINDOW_KEY_RSHIFT WINDOW_KEY_RSHIFT
+
+    WINDOW_KEY_LCTRL = 0x122,
+# define WINDOW_KEY_LCTRL WINDOW_KEY_LCTRL
+
+    WINDOW_KEY_MOD = 0x123,
+# define WINDOW_KEY_MOD WINDOW_KEY_MOD
+
+    WINDOW_KEY_LALT = 0x124,
+# define WINDOW_KEY_LALT WINDOW_KEY_LALT
+
+    WINDOW_KEY_SPACE = 0x20,
+# define WINDOW_KEY_SPACE WINDOW_KEY_SPACE
+
+    WINDOW_KEY_RALT = 0x125,
+# define WINDOW_KEY_RALT WINDOW_KEY_RALT
+
+    WINDOW_KEY_RCTRL = 0x126,
+# define WINDOW_KEY_RCTRL WINDOW_KEY_RCTRL
+
+    WINDOW_KEY_PRINTSCREEN = 0x127,
+# define WINDOW_KEY_PRINTSCREEN WINDOW_KEY_PRINTSCREEN
+
+    WINDOW_KEY_SCROLLLOCK = 0x128,
+# define WINDOW_KEY_SCROLLLOCK WINDOW_KEY_SCROLLLOCK
+
+    WINDOW_KEY_PAUSE = 0x129,
+# define WINDOW_KEY_PAUSE WINDOW_KEY_PAUSE
+
+    WINDOW_KEY_INSERT = 0x144,
+# define WINDOW_KEY_INSERT WINDOW_KEY_INSERT
+
+    WINDOW_KEY_HOME = 0x145,
+# define WINDOW_KEY_HOME WINDOW_KEY_HOME
+
+    WINDOW_KEY_PAGEUP = 0x146,
+# define WINDOW_KEY_PAGEUP WINDOW_KEY_PAGEUP
+
+    WINDOW_KEY_DELETE = 0x147,
+# define WINDOW_KEY_DELETE WINDOW_KEY_DELETE
+
+    WINDOW_KEY_END = 0x148,
+# define WINDOW_KEY_END WINDOW_KEY_END
+
+    WINDOW_KEY_PAGEDOWN = 0x149,
+# define WINDOW_KEY_PAGEDOWN WINDOW_KEY_PAGEDOWN
+
+    WINDOW_KEY_UP = 0x140,
+# define WINDOW_KEY_UP WINDOW_KEY_UP
+
+    WINDOW_KEY_LEFT = 0x141,
+# define WINDOW_KEY_LEFT WINDOW_KEY_LEFT
+
+    WINDOW_KEY_DOWN = 0x142,
+# define WINDOW_KEY_DOWN WINDOW_KEY_DOWN
+
+    WINDOW_KEY_RIGHT = 0x143,
+# define WINDOW_KEY_RIGHT WINDOW_KEY_RIGHT
+
+    WINDOW_KEY_NUMLOCK = 0x12A,
+# define WINDOW_KEY_NUMLOCK WINDOW_KEY_NUMLOCK
+
+    WINDOW_KEY_NUMSLASH = 0x16A,
+# define WINDOW_KEY_NUMSLASH WINDOW_KEY_NUMSLASH
+
+    WINDOW_KEY_NUMSTAR = 0x16B,
+# define WINDOW_KEY_NUMSTAR WINDOW_KEY_NUMSTAR
+
+    WINDOW_KEY_NUMDASH = 0x16C,
+# define WINDOW_KEY_NUMDASH WINDOW_KEY_NUMDASH
+
+    WINDOW_KEY_NUM7 = 0x167,
+# define WINDOW_KEY_NUM7 WINDOW_KEY_NUM7
+
+    WINDOW_KEY_NUM8 = 0x168,
+# define WINDOW_KEY_NUM8 WINDOW_KEY_NUM8
+
+    WINDOW_KEY_NUM9 = 0x169,
+# define WINDOW_KEY_NUM9 WINDOW_KEY_NUM9
+
+    WINDOW_KEY_NUM4 = 0x164,
+# define WINDOW_KEY_NUM4 WINDOW_KEY_NUM4
+
+    WINDOW_KEY_NUM5 = 0x165,
+# define WINDOW_KEY_NUM5 WINDOW_KEY_NUM5
+
+    WINDOW_KEY_NUM6 = 0x166,
+# define WINDOW_KEY_NUM6 WINDOW_KEY_NUM6
+
+    WINDOW_KEY_NUM1 = 0x161,
+# define WINDOW_KEY_NUM1 WINDOW_KEY_NUM1
+
+    WINDOW_KEY_NUM2 = 0x162,
+# define WINDOW_KEY_NUM2 WINDOW_KEY_NUM2
+
+    WINDOW_KEY_NUM3 = 0x163,
+# define WINDOW_KEY_NUM3 WINDOW_KEY_NUM3
+
+    WINDOW_KEY_NUM0 = 0x160,
+# define WINDOW_KEY_NUM0 WINDOW_KEY_NUM0
+
+    WINDOW_KEY_NUMSEP = 0x16D,
+# define WINDOW_KEY_NUMSEP WINDOW_KEY_NUMSEP
+
+    WINDOW_KEY_NUMPLUS = 0x16E,
+# define WINDOW_KEY_NUMPLUS WINDOW_KEY_NUMPLUS
+
+    WINDOW_KEY_NUMENTER = 0x16F,
+# define WINDOW_KEY_NUMENTER WINDOW_KEY_NUMENTER
+
+    /* ... */
+};
+
 /* library functions */
 
 enum {
@@ -289,6 +620,283 @@ WINDEF int win_timewait(uint64_t);
 #   include <X11/Xlib.h>
 #   include <X11/Xutil.h>
 #   include <X11/Xatom.h>
+#   include <X11/XKBlib.h>
+#   include <X11/keysym.h>
+#   include <X11/keysymdef.h>
+
+struct s_keymap {
+    uint32_t src;
+    uint32_t dst;
+};
+
+static const struct s_keymap g_keymap[] = {
+    
+    { XK_Escape, WINDOW_KEY_ESCAPE },
+    
+    { XK_F1, WINDOW_KEY_F1 },
+    
+    { XK_F2, WINDOW_KEY_F2 },
+    
+    { XK_F3, WINDOW_KEY_F3 },
+    
+    { XK_F4, WINDOW_KEY_F4 },
+    
+    { XK_F5, WINDOW_KEY_F5 },
+    
+    { XK_F6, WINDOW_KEY_F6 },
+    
+    { XK_F7, WINDOW_KEY_F7 },
+    
+    { XK_F8, WINDOW_KEY_F8 },
+    
+    { XK_F9, WINDOW_KEY_F9 },
+    
+    { XK_F10, WINDOW_KEY_F10 },
+    
+    { XK_F11, WINDOW_KEY_F11 },
+    
+    { XK_F12, WINDOW_KEY_F12 },
+    
+    { XK_grave, WINDOW_KEY_GRAVE }, 
+    { XK_asciitilde, WINDOW_KEY_GRAVE },
+    
+    { XK_1, WINDOW_KEY_ONE },       
+    { XK_exclam, WINDOW_KEY_ONE },
+    
+    { XK_2, WINDOW_KEY_TWO },       
+    { XK_at, WINDOW_KEY_TWO },
+    
+    { XK_3, WINDOW_KEY_THREE },     
+    { XK_numbersign, WINDOW_KEY_THREE },
+    
+    { XK_4, WINDOW_KEY_FOUR },      
+    { XK_dollar, WINDOW_KEY_FOUR },
+    
+    { XK_5, WINDOW_KEY_FIVE },      
+    { XK_percent, WINDOW_KEY_FIVE },
+    
+    { XK_6, WINDOW_KEY_SIX },       
+    { XK_asciicircum, WINDOW_KEY_SIX },
+    
+    { XK_7, WINDOW_KEY_SEVEN },     
+    { XK_ampersand, WINDOW_KEY_SEVEN },
+    
+    { XK_8, WINDOW_KEY_EIGHT },     
+    { XK_asterisk, WINDOW_KEY_EIGHT },
+    
+    { XK_9, WINDOW_KEY_NINE },      
+    { XK_parenleft, WINDOW_KEY_NINE },
+    
+    { XK_0, WINDOW_KEY_ZERO },      
+    { XK_parenright, WINDOW_KEY_ZERO },
+    
+    { XK_minus, WINDOW_KEY_DASH },  
+    { XK_underscore, WINDOW_KEY_DASH },
+    
+    { XK_equal, WINDOW_KEY_EQUAL },
+    { XK_plus, WINDOW_KEY_EQUAL },
+    
+    { XK_BackSpace, WINDOW_KEY_BACKSPACE },
+    
+    { XK_Tab, WINDOW_KEY_TAB },
+    
+    { XK_Q, WINDOW_KEY_Q },
+    { XK_q, WINDOW_KEY_Q },
+    
+    { XK_W, WINDOW_KEY_W },
+    { XK_w, WINDOW_KEY_W },
+    
+    { XK_E, WINDOW_KEY_E },
+    { XK_e, WINDOW_KEY_E },
+    
+    { XK_R, WINDOW_KEY_R },
+    { XK_r, WINDOW_KEY_R },
+    
+    { XK_T, WINDOW_KEY_T },
+    { XK_t, WINDOW_KEY_T },
+    
+    { XK_Y, WINDOW_KEY_Y },
+    { XK_y, WINDOW_KEY_Y },
+    
+    { XK_U, WINDOW_KEY_U },
+    { XK_u, WINDOW_KEY_U },
+    
+    { XK_I, WINDOW_KEY_I },
+    { XK_i, WINDOW_KEY_I },
+    
+    { XK_O, WINDOW_KEY_O },
+    { XK_o, WINDOW_KEY_O },
+    
+    { XK_P, WINDOW_KEY_P },
+    { XK_p, WINDOW_KEY_P },
+    
+    { XK_bracketleft, WINDOW_KEY_OBRACE },
+    { XK_braceleft, WINDOW_KEY_OBRACE },
+    
+    { XK_bracketright, WINDOW_KEY_CBRACE },
+    { XK_braceright, WINDOW_KEY_CBRACE },
+
+    { XK_Caps_Lock, WINDOW_KEY_CAPSLOCK },
+
+    { XK_A, WINDOW_KEY_A },
+    { XK_a, WINDOW_KEY_A },
+
+    { XK_S, WINDOW_KEY_S },
+    { XK_s, WINDOW_KEY_S },
+
+    { XK_D, WINDOW_KEY_D },
+    { XK_d, WINDOW_KEY_D },
+
+    { XK_F, WINDOW_KEY_F },
+    { XK_f, WINDOW_KEY_F },
+
+    { XK_G, WINDOW_KEY_G },
+    { XK_g, WINDOW_KEY_G },
+
+    { XK_H, WINDOW_KEY_H },
+    { XK_h, WINDOW_KEY_H },
+
+    { XK_J, WINDOW_KEY_J },
+    { XK_j, WINDOW_KEY_J },
+
+    { XK_K, WINDOW_KEY_K },
+    { XK_k, WINDOW_KEY_K },
+
+    { XK_L, WINDOW_KEY_L },
+    { XK_l, WINDOW_KEY_L },
+
+    { XK_semicolon, WINDOW_KEY_SEMICOLON },
+    { XK_colon, WINDOW_KEY_SEMICOLON },
+
+    { XK_apostrophe, WINDOW_KEY_QUOTE },
+    { XK_quotedbl, WINDOW_KEY_QUOTE },
+
+    { XK_backslash, WINDOW_KEY_BACKSLASH },
+    { XK_bar, WINDOW_KEY_BACKSLASH },
+
+    { XK_Return, WINDOW_KEY_ENTER },
+
+    { XK_Shift_L, WINDOW_KEY_LSHIFT },
+    
+    { XK_Z, WINDOW_KEY_Z },
+    { XK_z, WINDOW_KEY_Z },
+    
+    { XK_X, WINDOW_KEY_X },
+    { XK_x, WINDOW_KEY_X },
+    
+    { XK_C, WINDOW_KEY_C },
+    { XK_c, WINDOW_KEY_C },
+    
+    { XK_V, WINDOW_KEY_V },
+    { XK_v, WINDOW_KEY_V },
+    
+    { XK_B, WINDOW_KEY_B },
+    { XK_b, WINDOW_KEY_B },
+    
+    { XK_N, WINDOW_KEY_N },
+    { XK_n, WINDOW_KEY_N },
+    
+    { XK_M, WINDOW_KEY_M },
+    { XK_m, WINDOW_KEY_M },
+    
+    { XK_comma, WINDOW_KEY_COMMA },
+    { XK_less, WINDOW_KEY_COMMA },
+    
+    { XK_period, WINDOW_KEY_PERIOD },
+    { XK_greater, WINDOW_KEY_PERIOD },
+    
+    { XK_slash, WINDOW_KEY_SLASH },
+    { XK_question, WINDOW_KEY_SLASH },
+    
+    { XK_Shift_R, WINDOW_KEY_RSHIFT },
+    
+    { XK_Control_L, WINDOW_KEY_LCTRL },
+    
+    { XK_Super_L, WINDOW_KEY_MOD },
+    
+    { XK_Alt_L, WINDOW_KEY_LALT },
+    
+    { XK_space, WINDOW_KEY_SPACE },
+    
+    { XK_Alt_R, WINDOW_KEY_RALT },
+    
+    { XK_Control_R, WINDOW_KEY_RCTRL },
+
+    { XK_Print, WINDOW_KEY_PRINTSCREEN },
+    
+    { XK_Scroll_Lock, WINDOW_KEY_SCROLLLOCK },
+    
+    { XK_Pause, WINDOW_KEY_PAUSE },
+
+    { XK_Insert, WINDOW_KEY_INSERT },
+    
+    { XK_Home, WINDOW_KEY_HOME },
+    
+    { XK_Prior, WINDOW_KEY_PAGEUP },
+
+    { XK_Delete, WINDOW_KEY_DELETE },
+    
+    { XK_End, WINDOW_KEY_END },
+    
+    { XK_Next, WINDOW_KEY_PAGEDOWN },
+
+    { XK_Up, WINDOW_KEY_UP },
+    
+    { XK_Left, WINDOW_KEY_LEFT },
+    
+    { XK_Down, WINDOW_KEY_DOWN },
+    
+    { XK_Right, WINDOW_KEY_RIGHT },
+
+    { XK_Num_Lock, WINDOW_KEY_NUMLOCK },
+    
+    { XK_KP_Divide, WINDOW_KEY_NUMSLASH },
+    
+    { XK_KP_Multiply, WINDOW_KEY_NUMSTAR },
+    
+    { XK_KP_Subtract, WINDOW_KEY_NUMDASH },
+    
+    { XK_KP_Home, WINDOW_KEY_NUM7 },
+    { XK_KP_7, WINDOW_KEY_NUM7 },
+    
+    { XK_KP_Up, WINDOW_KEY_NUM8 },
+    { XK_KP_8, WINDOW_KEY_NUM8 },
+    
+    { XK_KP_Prior, WINDOW_KEY_NUM9 },
+    { XK_KP_9, WINDOW_KEY_NUM9 },
+    
+    { XK_KP_Left, WINDOW_KEY_NUM4 },
+    { XK_KP_4, WINDOW_KEY_NUM4 },
+    
+    { XK_KP_Begin, WINDOW_KEY_NUM5 },
+    { XK_KP_5, WINDOW_KEY_NUM5 },
+    
+    { XK_KP_Right, WINDOW_KEY_NUM6 },
+    { XK_KP_6, WINDOW_KEY_NUM6 },
+    
+    { XK_KP_End, WINDOW_KEY_NUM1 },
+    { XK_KP_1, WINDOW_KEY_NUM1 },
+    
+    { XK_KP_Down, WINDOW_KEY_NUM2 },
+    { XK_KP_2, WINDOW_KEY_NUM2 },
+    
+    { XK_KP_Next, WINDOW_KEY_NUM3 },
+    { XK_KP_3, WINDOW_KEY_NUM3 },
+    
+    { XK_KP_Insert, WINDOW_KEY_NUM0 },
+    { XK_KP_0, WINDOW_KEY_NUM0 },
+    
+    { XK_KP_Delete, WINDOW_KEY_NUMSEP },
+    
+    { XK_KP_Add, WINDOW_KEY_NUMPLUS },
+    
+    { XK_KP_Enter, WINDOW_KEY_NUMENTER },
+
+    
+    /* ... */
+
+    { 0, WINDOW_KEY_NONE }
+};
 
 /* platform functions */
 
@@ -862,7 +1470,7 @@ WININT int __win_eventpoll_x11(void) {
     XEvent xevent = { 0 };
     while (XPending(WINDOW->xlib.dpy)) {
         XNextEvent(WINDOW->xlib.dpy, &xevent);
-
+        
         switch (xevent.type) {
             case (ClientMessage): {
                 if (xevent.xclient.message_type == WINDOW->xatom.wm_protocols) {
@@ -873,7 +1481,6 @@ WININT int __win_eventpoll_x11(void) {
                             .type = WINDOW_EVENT_QUIT,
                             .timestamp = win_timeget()
                         };
-
                         win_eventpush((t_event *) &event);
                     }
                 }
@@ -886,7 +1493,6 @@ WININT int __win_eventpoll_x11(void) {
                     .x = xevent.xmotion.x, .xrel = xevent.xmotion.x_root,
                     .y = xevent.xmotion.y, .yrel = xevent.xmotion.y_root,
                 };
-
                 win_eventpush((t_event *) &event);
             } break;
 
@@ -894,9 +1500,12 @@ WININT int __win_eventpoll_x11(void) {
             case (ButtonRelease): {
                 uint8_t btn = 0;
                 switch (xevent.xbutton.button) {
-                    case (1): { btn = 1; } break; /* left */
-                    case (2): { btn = 3; } break; /* middle */
-                    case (3): { btn = 2; } break; /* right */
+                    /* key press / relese */
+                    case (1): { btn = WINDOW_BUTTON_LEFT;   } break; /* left */
+                    case (2): { btn = WINDOW_BUTTON_MIDDLE; } break; /* middle */
+                    case (3): { btn = WINDOW_BUTTON_RIGHT;  } break; /* right */
+
+                    /* scroll up / down */
                     case (4): { btn = 4; } break; /* scroll up */
                     case (5): { btn = 5; } break; /* scroll down */
                 }
@@ -914,12 +1523,11 @@ WININT int __win_eventpoll_x11(void) {
                         .btn = btn,
                         .state = state
                     };
-                    
                     win_eventpush((t_event *) &event);
                 }
 
                 /* scroll up / down... */
-                else {
+                else if (btn >= 4 && btn <= 5) {
                     if (xevent.type == ButtonRelease) { break; }
 
                     t_eventMouseScroll event = (t_eventMouseScroll) {
@@ -927,9 +1535,34 @@ WININT int __win_eventpoll_x11(void) {
                         .timestamp = win_timeget(),
                         .scroll = (btn == 4) ? 1 : -1
                     };
-
                     win_eventpush((t_event *) &event);
                 }
+            } break;
+
+            case (KeyPress):
+            case (KeyRelease): {
+                uint8_t  state   = (xevent.type == KeyPress) ? 1 : 0;
+                uint64_t keycode = xevent.xkey.keycode;
+                uint64_t keysym  = XkbKeycodeToKeysym(WINDOW->xlib.dpy, keycode, 0, state);
+
+                uint32_t key = 0;
+                for (size_t i = 0; g_keymap[i].src; i++) {
+                    if (keysym == g_keymap[i].src) {
+                        key = g_keymap[i].dst;
+                        break;
+                    }
+                }
+
+                /* invalid button... */
+                if (key== 0) { break; }
+
+                t_eventKeyboardKey event = (t_eventKeyboardKey) {
+                    .type = WINDOW_EVENT_KEYBOARD_KEY,
+                    .timestamp = win_timeget(),
+                    .key = key,
+                    .state = state
+                };
+                win_eventpush((t_event *) &event);
             } break;
 
             case (ConfigureNotify): {
@@ -970,9 +1603,7 @@ WININT int __win_eventpoll_x11(void) {
                     .x = xevent.xconfigure.x,     .y = xevent.xconfigure.y,
                     .w = xevent.xconfigure.width, .h = xevent.xconfigure.height,
                 };
-                
                 win_eventpush((t_event *) &event);
-
             } break;
         }
     }

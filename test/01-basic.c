@@ -37,6 +37,10 @@ int main(void) {
                     printf("WINDOW_EVENT_QUIT\n");
                     exit = 1;
                 } break;
+
+                case (WINDOW_EVENT_KEYBOARD_KEY): {
+                    printf("WINDOW_EVENT_KEYBOARD_KEY:\n- key: %d\n- state: %d\n", event.key.key, event.key.state);
+                } break;
             }
         }
     }
