@@ -977,6 +977,13 @@ WINDEF int win_init(void) {
     WINDOW->da_event.arr = calloc(WINDOW->da_event.cap, sizeof(t_event));
     if (!WINDOW->da_event.arr) { return (0); }
 
+    /* set keyboard input repeating... */
+    Bool supported;
+    XkbSetDetectableAutoRepeat(dpy, True, &supported);
+    if (!supported) {
+        return (0);
+    }
+
     /* set up window array... */
     WINDOW->da_window.cap = 16;
     WINDOW->da_window.arr = calloc(WINDOW->da_window.cap, sizeof(t_window));
