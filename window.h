@@ -904,9 +904,12 @@ static const struct s_keymap g_keymap[] = {
     { 0, WINDOW_KEY_NONE }
 };
 
-/* platform functions */
-
 struct s_platform {
+    /* singly-linked list of windows 
+     * (glfw3 style of windwo handling)
+     * */
+    struct s_window *win_ll;
+
     struct {
         Display *dpy;   /* display pointer */
         XID      r_id;  /* root window's ID */
@@ -930,12 +933,37 @@ struct s_platform {
         size_t   cap;
         size_t   cnt;
     } da_event;
+};
+
+struct s_window {
+    struct s_window *next;
 
     struct {
-        t_window *arr;
-        size_t    cap;
-    } da_window;
+        Display *dpy;   /* display pointer */
+        XID      r_id;  /* root window's ID */
+        XID      s_id;  /* screen's ID */
+        XID      w_id;  /* this window's ID */
+    } xlib;
+    
+    struct {
+        Atom wm_protocols;
+        Atom wm_delete_window;
+    } xatom;
+
+    struct {
+        XVisualInfo visual;
+    } xutil;
+
+    struct {
+        /* position attributes... */
+        size_t x, y;
+
+        /* dimension attributes... */
+        size_t w, h;
+    } attr;
 };
+
+/* platform functions */
 
 static struct s_platform *WINDOW = 0; 
 
@@ -985,11 +1013,6 @@ WINDEF int win_init(void) {
     WINDOW->da_event.cap = 0;
     WINDOW->da_event.cnt = 0;
 
-    /* set up window array... */
-    WINDOW->da_window.cap = 16;
-    WINDOW->da_window.arr = calloc(WINDOW->da_window.cap, sizeof(t_window));
-    if (!WINDOW->da_window.arr) { goto __win_init_failure; }
-
     /* set keyboard input repeating... */
     Bool supported;
     XkbSetDetectableAutoRepeat(dpy, True, &supported);
@@ -998,12 +1021,10 @@ WINDEF int win_init(void) {
     }
 
     /* success */
+    win_eventflush();
     return (1);
 
 __win_init_failure:
-
-    /* release other resources */
-    if (WINDOW->da_window.arr) { free(WINDOW->da_window.arr), WINDOW->da_window.arr = 0; }
 
     /* release xlib resources */
     if (WINDOW->xlib.dpy) { XCloseDisplay(WINDOW->xlib.dpy), WINDOW->xlib.dpy = 0; }
@@ -1021,17 +1042,15 @@ WINDEF int win_quit(void) {
     if (!WINDOW) { return (0); }
 
     /* deallocate all the windows... */
-    for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
-        if (!WINDOW->da_window.arr[i]) { continue; }
-
-        win_windestroy(WINDOW->da_window.arr[i]);
+    t_window curr = WINDOW->win_ll,
+             next = 0;
+    while (curr) {
+        next = curr->next;
+        win_windestroy(curr);
+        curr = next;
     }
-
-    free(WINDOW->da_window.arr);
-    WINDOW->da_window.arr = 0;
-    WINDOW->da_window.cap = 0;
    
-    /* deallocate da_event... */
+    /* deallocate event... */
     if (WINDOW->da_event.arr) {
         free(WINDOW->da_event.arr);
         WINDOW->da_event.arr   = 0;
@@ -1085,32 +1104,6 @@ WINDEF void *win_getprop(const uint64_t prop) {
 }
 
 /* windowing functions */
-
-struct s_window {
-    struct {
-        Display *dpy;   /* display pointer */
-        XID      r_id;  /* root window's ID */
-        XID      s_id;  /* screen's ID */
-        XID      w_id;  /* this window's ID */
-    } xlib;
-    
-    struct {
-        Atom wm_protocols;
-        Atom wm_delete_window;
-    } xatom;
-
-    struct {
-        XVisualInfo visual;
-    } xutil;
-
-    struct {
-        /* position attributes... */
-        size_t x, y;
-
-        /* dimension attributes... */
-        size_t w, h;
-    } attr;
-};
 
 WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
     /* null-check... */
@@ -1179,50 +1172,21 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
 
     result->xlib.w_id = w_id;
     XSelectInput(result->xlib.dpy, result->xlib.w_id, attr0.event_mask);
-    XStoreName(result->xlib.dpy, result->xlib.w_id, t);
-
     XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_protocols, 1);
     XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_delete_window, 1);
    
-    /* configure windows attributes... */
-    XWindowAttributes attr1 = { 0 };
-    XGetWindowAttributes(result->xlib.dpy, result->xlib.w_id, &attr1); 
-    result->attr.x = attr1.x;
-    result->attr.y = attr1.y;
-    result->attr.w = attr1.width;
-    result->attr.h = attr1.height;
+    win_winsettitle(result, t);
+    win_wingetpos(result, &result->attr.x, &result->attr.y);
+    win_wingetsize(result, &result->attr.w, &result->attr.h);
 
-    /* append window to da_window... */
-    size_t i;
-    for (i = 0; i < WINDOW->da_window.cap; i++) {
-        /* set the first `null` window object to the current window... */
-        if (WINDOW->da_window.arr[i] == 0) {
-            WINDOW->da_window.arr[i]  = result;
-            break;
-        }
-    }
-
-    /* da_window is exhausted, we must resize it.
-     * After that we must append the window to newly - resized da_window.
-     * */
-    if (i == WINDOW->da_window.cap) {
-        WINDOW->da_window.cap *= 1.5;
-        WINDOW->da_window.arr  = realloc(WINDOW->da_window.arr, WINDOW->da_window.cap * sizeof(t_window));
-        if (!WINDOW->da_window.arr) { goto __win_wincreate_failure; }
-
-        for ( ; i< WINDOW->da_window.cap; i++) {
-            /* set the first `null` window object to the current window... */
-            if (WINDOW->da_window.arr[i] == 0) {
-                WINDOW->da_window.arr[i]  = result;
-                break;
-            }
-        }
-    }
-
-    /* set the `result` object as `win` return object... */
+    /* append the window to platform's window linked list... */
+    result->next   = WINDOW->win_ll;
+    WINDOW->win_ll = result; 
+    /* and return the result */
     *win = result;
 
     /* success */
+    win_eventflush();
     return (1);
 
 __win_wincreate_failure:
@@ -1246,12 +1210,23 @@ WINDEF int win_windestroy(t_window win) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
-    /* erase window from da_window... */
-    for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
-        if (win == WINDOW->da_window.arr[i]) {
-            WINDOW->da_window.arr[i] = 0;
-            break;
+    /* unlink the node from platform's window linked list */
+    t_window *curr = &WINDOW->win_ll;
+    if (win == (*curr)) {
+        WINDOW->win_ll = (*curr)->next;
+    }
+    else {
+        /* go until the next node is out `win` */
+        while ((*curr) && (*curr)->next != win) {
+            (*curr) = (*curr)->next;
         }
+        
+        /* check if we found anything */
+        if (!(*curr)) {
+            return (0);
+        }
+        
+        (*curr) = win->next;
     }
 
     /* destroy window's components... */
@@ -1261,6 +1236,7 @@ WINDEF int win_windestroy(t_window win) {
     free(win);
 
     /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -1285,6 +1261,7 @@ WINDEF int win_winunmap(t_window win) {
     XUnmapWindow(win->xlib.dpy, win->xlib.w_id);
 
     /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -1303,6 +1280,7 @@ WINDEF int win_wingetsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
     if (h_ptr) { *h_ptr = attr.height; }
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1316,6 +1294,7 @@ WINDEF int win_winsetsize(t_window win, const size_t w, const size_t h) {
     if (!XResizeWindow(win->xlib.dpy, win->xlib.w_id, w, h)) { return (0); }
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1337,6 +1316,7 @@ WINDEF int win_winsetsizemin(t_window win, const size_t w, const size_t h) {
     XSetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints);
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1358,6 +1338,7 @@ WINDEF int win_winsetsizemax(t_window win, const size_t w, const size_t h) {
     XSetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints);
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1376,6 +1357,7 @@ WINDEF int win_wingetpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
     if (y_ptr) { *y_ptr = attr.y; }
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1397,6 +1379,7 @@ WINDEF int win_winsetpos(t_window win, const size_t x, const size_t y) {
     XSetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints);
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1409,6 +1392,7 @@ WINDEF int win_winsetminim(t_window win) {
     /* ... */
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1421,6 +1405,7 @@ WINDEF int win_winsetmaxim(t_window win) {
     /* ... */
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1433,6 +1418,7 @@ WINDEF int win_winsetfullscr(t_window win) {
     /* ... */
 
     /* success */
+    win_eventflush();
 	return (1);
 }
 
@@ -1449,6 +1435,7 @@ WINDEF int win_wingettitle(t_window win, char **t_ptr) {
     }
 
     /* success */
+    win_eventflush();
 	return (1);
 
 }
@@ -1464,6 +1451,7 @@ WINDEF int win_winsettitle(t_window win, const char *t) {
     XStoreName(win->xlib.dpy, win->xlib.w_id, t);
 
     /* success */
+    win_eventflush();
 	return (1);
 
 }
@@ -1598,7 +1586,7 @@ WININT int __win_eventpoll_x11(void) {
                 }
 
                 /* invalid button... */
-                if (key== 0) { break; }
+                if (key == 0) { break; }
 
                 t_eventKeyboardKey event = (t_eventKeyboardKey) {
                     .type = WINDOW_EVENT_KEYBOARD_KEY,
@@ -1611,15 +1599,14 @@ WININT int __win_eventpoll_x11(void) {
 
             case (ConfigureNotify): {
                 /* get the window reference... */
-                t_window win = 0;
-                for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
-                    if (WINDOW->da_window.arr[i]) {
-                        if (WINDOW->da_window.arr[i]->xlib.w_id == xevent.xconfigure.window) {
-                            win = WINDOW->da_window.arr[i];
-                            break;
-                        }
+                t_window win;
+                for (win = WINDOW->win_ll; win; win = win->next) {
+                    if (win->xlib.w_id == xevent.xconfigure.window) {
+                        break;
                     }
                 }
+
+                if (!win) { return (0); }
 
                 uint32_t type = 0;
 

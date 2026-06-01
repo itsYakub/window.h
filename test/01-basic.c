@@ -10,22 +10,11 @@ int main(void) {
         return (1);
     }
 
-    /* create window */
-    t_window window = 0;
-    if (!win_wincreate(&window, 800, 600, "01 - basic", 0)) {
-        fprintf(stderr, "win_wincreate() failed\n");
-
-        win_quit();
-        return (1);
-    }
-
-    /* map window onto the screen */
-    if (!win_winmap(window)) {
-        fprintf(stderr, "win_wincreate() failed\n");
-
-        win_quit();
-        return (1);
-    }
+    for (size_t i = 0; i < 4; i++) {
+        t_window win;
+        win_wincreate(&win, 800, 600, "Hello, window.h", 0);
+        win_winmap(win);
+    } 
 
     int exit = 0;
     while (!exit) {
@@ -37,16 +26,11 @@ int main(void) {
                     printf("WINDOW_EVENT_QUIT\n");
                     exit = 1;
                 } break;
-
-                case (WINDOW_EVENT_KEYBOARD_KEY): {
-                    printf("WINDOW_EVENT_KEYBOARD_KEY:\n- key: %d\n- state: %d\n", event.key.key, event.key.state);
-                } break;
             }
         }
     }
 
     /* quit */
-    win_windestroy(window), window = 0;
     win_quit();
     return (0);
 }
