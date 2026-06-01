@@ -1685,7 +1685,7 @@ WINDEF int win_eventpush(t_event *event) {
      * if exceeds the `arr`, return back to start
      * */
     size_t arr_e_idx = WINDOW->da_event.arr_e - WINDOW->da_event.arr;
-    if (arr_e_idx >= WINDOW->da_event.cnt) {
+    if (arr_e_idx >= WINDOW->da_event.cap) {
         WINDOW->da_event.arr_e = WINDOW->da_event.arr;
     }
 
@@ -1718,7 +1718,7 @@ WINDEF int win_eventpop(t_event *event) {
      * if exceeds the `arr`, return back to start
      * */
     size_t arr_s_idx = WINDOW->da_event.arr_s - WINDOW->da_event.arr;
-    if (arr_s_idx >= WINDOW->da_event.cnt) {
+    if (arr_s_idx >= WINDOW->da_event.cap) {
         WINDOW->da_event.arr_s = WINDOW->da_event.arr;
     }
 
