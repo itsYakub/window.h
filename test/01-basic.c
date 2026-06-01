@@ -10,11 +10,9 @@ int main(void) {
         return (1);
     }
 
-    for (size_t i = 0; i < 4; i++) {
-        t_window win;
-        win_wincreate(&win, 800, 600, "Hello, window.h", 0);
-        win_winmap(win);
-    } 
+    t_window win;
+    win_wincreate(&win, 800, 600, "Hello, window.h", 0);
+    win_winmap(win);
 
     int exit = 0;
     while (!exit) {
