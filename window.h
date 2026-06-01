@@ -898,7 +898,6 @@ static const struct s_keymap g_keymap[] = {
     
     { XK_KP_Enter, WINDOW_KEY_NUMENTER },
 
-    
     /* ... */
 
     { 0, WINDOW_KEY_NONE }
@@ -911,9 +910,9 @@ struct s_platform {
     struct s_window *win_ll;
 
     struct {
-        Display *dpy;   /* display pointer */
-        XID      r_id;  /* root window's ID */
-        XID      s_id;  /* screen's ID */
+        Display *dpy;
+        Window   root;
+        XID      screen;
     } xlib;
 
     struct {
@@ -939,10 +938,10 @@ struct s_window {
     struct s_window *next;
 
     struct {
-        Display *dpy;   /* display pointer */
-        XID      r_id;  /* root window's ID */
-        XID      s_id;  /* screen's ID */
-        XID      w_id;  /* this window's ID */
+        Display *dpy;
+        Window   parent;
+        Window   child;
+        XID      screen;
     } xlib;
     
     struct {
@@ -980,16 +979,16 @@ WINDEF int win_init(void) {
     if (!dpy) { goto __win_init_failure; }
 
     /* get the root window */
-    XID r_id = XDefaultRootWindow(dpy);
-    if (!r_id) { goto __win_init_failure; }
+    XID root = XDefaultRootWindow(dpy);
+    if (!root) { goto __win_init_failure; }
 
     /* get screen number */
-    XID s_id = XDefaultScreen(dpy);
+    XID screen = XDefaultScreen(dpy);
 
     /* assign data to `xlib` platform section */
     WINDOW->xlib.dpy  = dpy;
-    WINDOW->xlib.r_id = r_id;
-    WINDOW->xlib.s_id = s_id;
+    WINDOW->xlib.root = root;
+    WINDOW->xlib.screen = screen;
    
     /* retrieve atoms from x11 session */
     Atom wm_protocols = XInternAtom(dpy, "WM_PROTOCOLS", False);
@@ -1077,7 +1076,7 @@ WINDEF int win_getsize(size_t *w_ptr, size_t *h_ptr) {
 
     /* query attributes */
     XWindowAttributes attr;
-    if (!XGetWindowAttributes(WINDOW->xlib.dpy, WINDOW->xlib.r_id, &attr)) { return (0); }
+    if (!XGetWindowAttributes(WINDOW->xlib.dpy, WINDOW->xlib.root, &attr)) { return (0); }
     
     /* assign values */
     if (w_ptr) { *w_ptr = attr.width; }
@@ -1093,8 +1092,8 @@ WINDEF void *win_getprop(const uint64_t prop) {
     if (!WINDOW) { return (0); }
     switch (prop) {
         case (WINDOW_PROP_PLATFORM_X11_DISPLAY):   { return (WINDOW->xlib.dpy); }
-        case (WINDOW_PROP_PLATFORM_X11_ROOT_ID):   { return (&WINDOW->xlib.r_id); }
-        case (WINDOW_PROP_PLATFORM_X11_SCREEN_ID): { return (&WINDOW->xlib.s_id); }
+        case (WINDOW_PROP_PLATFORM_X11_ROOT_ID):   { return (&WINDOW->xlib.root); }
+        case (WINDOW_PROP_PLATFORM_X11_SCREEN_ID): { return (&WINDOW->xlib.screen); }
 
         default: { } break;
     }
@@ -1123,9 +1122,9 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
     if (!WINDOW->xlib.dpy) { goto __win_wincreate_failure; }
     result->xlib.dpy  = WINDOW->xlib.dpy;
     
-    if (!WINDOW->xlib.r_id) { goto __win_wincreate_failure; }
-    result->xlib.r_id = WINDOW->xlib.r_id;
-    result->xlib.s_id = WINDOW->xlib.s_id;
+    if (!WINDOW->xlib.root) { goto __win_wincreate_failure; }
+    result->xlib.parent = WINDOW->xlib.root;
+    result->xlib.screen = WINDOW->xlib.screen;
 
     /* assign references to X11 atoms */
     result->xatom.wm_protocols = WINDOW->xatom.wm_protocols;
@@ -1133,7 +1132,7 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
 
     /* get visual info */
     if (!XMatchVisualInfo(result->xlib.dpy,
-                          result->xlib.s_id,
+                          result->xlib.screen,
                           WINDOW->config.depth,
                           WINDOW->config.class,
                           &result->xutil.visual)
@@ -1142,7 +1141,7 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
     }
 
     /* colormap */
-    XID colormap = XCreateColormap(result->xlib.dpy, result->xlib.r_id, result->xutil.visual.visual, AllocNone);
+    XID colormap = XCreateColormap(result->xlib.dpy, result->xlib.parent, result->xutil.visual.visual, AllocNone);
     if (!colormap) {
         goto __win_wincreate_failure;
     }
@@ -1167,13 +1166,13 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
     };
 
     /* create window */
-    XID w_id = XCreateWindow(result->xlib.dpy, result->xlib.r_id, 0, 0, w, h, 0, result->xutil.visual.depth, InputOutput, result->xutil.visual.visual, CWColormap | CWBorderPixel | CWBackPixel | CWEventMask, &attr0);
-    if (!w_id) { goto __win_wincreate_failure; }
+    XID child = XCreateWindow(result->xlib.dpy, result->xlib.parent, 0, 0, w, h, 0, result->xutil.visual.depth, InputOutput, result->xutil.visual.visual, CWColormap | CWBorderPixel | CWBackPixel | CWEventMask, &attr0);
+    if (!child) { goto __win_wincreate_failure; }
 
-    result->xlib.w_id = w_id;
-    XSelectInput(result->xlib.dpy, result->xlib.w_id, attr0.event_mask);
-    XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_protocols, 1);
-    XSetWMProtocols(result->xlib.dpy, result->xlib.w_id, &result->xatom.wm_delete_window, 1);
+    result->xlib.child = child;
+    XSelectInput(result->xlib.dpy, result->xlib.child, attr0.event_mask);
+    XSetWMProtocols(result->xlib.dpy, result->xlib.child, &result->xatom.wm_protocols, 1);
+    XSetWMProtocols(result->xlib.dpy, result->xlib.child, &result->xatom.wm_delete_window, 1);
    
     win_winsettitle(result, t);
     win_wingetpos(result, &result->attr.x, &result->attr.y);
@@ -1192,7 +1191,7 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
 __win_wincreate_failure:
 
     /* release xlib resources */
-    if (w_id) { XDestroyWindow(WINDOW->xlib.dpy, w_id), w_id = 0; }
+    if (child) { XDestroyWindow(WINDOW->xlib.dpy, child), child = 0; }
 
     /* release result */
     if (result) { free(result), result = 0; }
@@ -1230,7 +1229,7 @@ WINDEF int win_windestroy(t_window win) {
     }
 
     /* destroy window's components */
-    XDestroyWindow(win->xlib.dpy, win->xlib.w_id);
+    XDestroyWindow(win->xlib.dpy, win->xlib.child);
     
     /* deallocate window object */
     free(win);
@@ -1246,7 +1245,7 @@ WINDEF int win_winmap(t_window win) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
-    XMapWindow(win->xlib.dpy, win->xlib.w_id);
+    XMapWindow(win->xlib.dpy, win->xlib.child);
 
     /* success */
     return (1);
@@ -1258,7 +1257,7 @@ WINDEF int win_winunmap(t_window win) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
-    XUnmapWindow(win->xlib.dpy, win->xlib.w_id);
+    XUnmapWindow(win->xlib.dpy, win->xlib.child);
 
     /* success */
     win_eventflush();
@@ -1273,7 +1272,7 @@ WINDEF int win_wingetsize(t_window win, size_t *w_ptr, size_t *h_ptr) {
 
     /* query attributes */
     XWindowAttributes attr;
-    if (!XGetWindowAttributes(win->xlib.dpy, win->xlib.w_id, &attr)) { return (0); }
+    if (!XGetWindowAttributes(win->xlib.dpy, win->xlib.child, &attr)) { return (0); }
     
     /* assign values */
     if (w_ptr) { *w_ptr = attr.width; }
@@ -1291,7 +1290,7 @@ WINDEF int win_winsetsize(t_window win, const size_t w, const size_t h) {
     if (!win)    { return (0); }
 
     /* resize */
-    if (!XResizeWindow(win->xlib.dpy, win->xlib.w_id, w, h)) { return (0); }
+    if (!XResizeWindow(win->xlib.dpy, win->xlib.child, w, h)) { return (0); }
 
     /* success */
     win_eventflush();
@@ -1307,13 +1306,13 @@ WINDEF int win_winsetsizemin(t_window win, const size_t w, const size_t h) {
     /* get WM normal hints */
     XSizeHints hints;
     int64_t supp;
-    XGetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints, &supp);
+    XGetWMNormalHints(win->xlib.dpy, win->xlib.child, &hints, &supp);
 
     /* set new WM normal hints with position changed */
     hints.flags = PMinSize;
     hints.min_width  = w;
     hints.min_height = h;
-    XSetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints);
+    XSetWMNormalHints(win->xlib.dpy, win->xlib.child, &hints);
 
     /* success */
     win_eventflush();
@@ -1329,13 +1328,13 @@ WINDEF int win_winsetsizemax(t_window win, const size_t w, const size_t h) {
     /* get WM normal hints */
     XSizeHints hints;
     int64_t supp;
-    XGetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints, &supp);
+    XGetWMNormalHints(win->xlib.dpy, win->xlib.child, &hints, &supp);
 
     /* set new WM normal hints with position changed */
     hints.flags = PMaxSize;
     hints.max_width  = w;
     hints.max_height = h;
-    XSetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints);
+    XSetWMNormalHints(win->xlib.dpy, win->xlib.child, &hints);
 
     /* success */
     win_eventflush();
@@ -1350,7 +1349,7 @@ WINDEF int win_wingetpos(t_window win, size_t *x_ptr, size_t *y_ptr) {
 
     /* query attributes */
     XWindowAttributes attr;
-    if (!XGetWindowAttributes(win->xlib.dpy, win->xlib.w_id, &attr)) { return (0); }
+    if (!XGetWindowAttributes(win->xlib.dpy, win->xlib.child, &attr)) { return (0); }
     
     /* assign values */
     if (x_ptr) { *x_ptr = attr.x; }
@@ -1370,13 +1369,13 @@ WINDEF int win_winsetpos(t_window win, const size_t x, const size_t y) {
     /* get WM normal hints */
     XSizeHints hints;
     int64_t supp;
-    XGetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints, &supp);
+    XGetWMNormalHints(win->xlib.dpy, win->xlib.child, &hints, &supp);
 
     /* set new WM normal hints with position changed */
     hints.flags = PPosition;
     hints.x = x;
     hints.y = y;
-    XSetWMNormalHints(win->xlib.dpy, win->xlib.w_id, &hints);
+    XSetWMNormalHints(win->xlib.dpy, win->xlib.child, &hints);
 
     /* success */
     win_eventflush();
@@ -1430,7 +1429,7 @@ WINDEF int win_wingettitle(t_window win, char **t_ptr) {
     if (!t_ptr)  { return (0); }
 
     /* fetch the title */
-    if (XFetchName(win->xlib.dpy, win->xlib.w_id, t_ptr)) {
+    if (XFetchName(win->xlib.dpy, win->xlib.child, t_ptr)) {
         return (0);
     }
 
@@ -1448,7 +1447,7 @@ WINDEF int win_winsettitle(t_window win, const char *t) {
     if (!t)      { return (0); }
 
     /* store the title */
-    XStoreName(win->xlib.dpy, win->xlib.w_id, t);
+    XStoreName(win->xlib.dpy, win->xlib.child, t);
 
     /* success */
     win_eventflush();
@@ -1463,9 +1462,9 @@ WINDEF void *win_wingetprop(t_window win, const uint64_t prop) {
     if (!win)     { return (0); }
     switch (prop) {
         case (WINDOW_PROP_WINDOW_X11_DISPLAY):   { return (win->xlib.dpy); }
-        case (WINDOW_PROP_WINDOW_X11_ROOT_ID):   { return (&win->xlib.r_id); }
-        case (WINDOW_PROP_WINDOW_X11_SCREEN_ID): { return (&win->xlib.s_id); }
-        case (WINDOW_PROP_WINDOW_X11_WINDOW_ID): { return (&win->xlib.w_id); }
+        case (WINDOW_PROP_WINDOW_X11_ROOT_ID):   { return (&win->xlib.parent); }
+        case (WINDOW_PROP_WINDOW_X11_SCREEN_ID): { return (&win->xlib.screen); }
+        case (WINDOW_PROP_WINDOW_X11_WINDOW_ID): { return (&win->xlib.child); }
         case (WINDOW_PROP_WINDOW_X11_VISUAL):    { return (win->xutil.visual.visual); }
 
         default: { } break;
@@ -1601,7 +1600,7 @@ WININT int __win_eventpoll_x11(void) {
                 /* get the window reference */
                 t_window win;
                 for (win = WINDOW->win_ll; win; win = win->next) {
-                    if (win->xlib.w_id == xevent.xconfigure.window) {
+                    if (win->xlib.child == xevent.xconfigure.window) {
                         break;
                     }
                 }
@@ -1789,23 +1788,50 @@ WINDEF int win_timewait(uint64_t ms) {
 #  /* window.h API definitions template */
 #  if (0)
 
-/* platform functions */
+struct s_keymap {
+    uint32_t src;
+    uint32_t dst;
+};
+
+static const struct s_keymap g_keymap[] = {
+    
+    /* ... */
+
+    { 0, WINDOW_KEY_NONE }
+};
 
 struct s_platform {
+    /* singly-linked list of windows 
+     * (glfw3 style of window handling)
+     * */
+    struct s_window *win_ll;
 
     /* ... */
 
     struct {
         t_event *arr;
-        size_t   cnt;
+        t_event *arr_s;
+        t_event *arr_e;
         size_t   cap;
+        size_t   cnt;
     } da_event;
+};
+
+struct s_window {
+    struct s_window *next;
+
+    /* ... */
 
     struct {
-        t_window *arr;
-        size_t    cap;
-    } da_window;
+        /* position attributes */
+        size_t x, y;
+
+        /* dimension attributes */
+        size_t w, h;
+    } attr;
 };
+
+/* platform functions */
 
 static struct s_platform *WINDOW = 0; 
 
@@ -1832,6 +1858,7 @@ WINDEF int win_init(void) {
     if (!WINDOW->da_window.arr) { return (0); }
 
     /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -1841,21 +1868,23 @@ WINDEF int win_quit(void) {
     if (!WINDOW) { return (0); }
 
     /* deallocate all the windows */
-    for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
-        if (!WINDOW->da_window.arr[i]) { continue; }
-
-        win_windestroy(WINDOW->da_window.arr[i]);
+    t_window curr = WINDOW->win_ll,
+             next = 0;
+    while (curr) {
+        next = curr->next;
+        win_windestroy(curr);
+        curr = next;
     }
-
-    free(WINDOW->da_window.arr);
-    WINDOW->da_window.arr = 0;
-    WINDOW->da_window.cap = 0;
    
-    /* deallocate da_event */
-    free(WINDOW->da_event.arr);
-    WINDOW->da_event.arr = 0;
-    WINDOW->da_event.cnt = 0;
-    WINDOW->da_event.cap = 0;
+    /* deallocate event */
+    if (WINDOW->da_event.arr) {
+        free(WINDOW->da_event.arr);
+        WINDOW->da_event.arr   = 0;
+        WINDOW->da_event.arr_s = 0;
+        WINDOW->da_event.arr_e = 0;
+        WINDOW->da_event.cnt = 0;
+        WINDOW->da_event.cap = 0;
+    }
 
     /* ... */
 
@@ -1900,19 +1929,6 @@ WINDEF void *win_getprop(const uint64_t prop) {
 
 /* windowing functions */
 
-struct s_window {
-
-    /* ... */
-
-    struct {
-        /* position attributes */
-        size_t x, y;
-
-        /* dimension attributes */
-        size_t w, h;
-    } attr;
-};
-
 WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
     /* null-check */
     if (!WINDOW) { return (0); }
@@ -1924,41 +1940,18 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
 
     /* ... */
 
-    /* configure windows attributes */
-    result->attr.w = w;
-    result->attr.h = h;
+    win_winsettitle(result, t);
+    win_wingetpos(result, &result->attr.x, &result->attr.y);
+    win_wingetsize(result, &result->attr.w, &result->attr.h);
 
-    /* append window to da_window */
-    size_t i;
-    for (i = 0; i < WINDOW->da_window.cap; i++) {
-        /* set the first `null` window object to the current window */
-        if (WINDOW->da_window.arr[i] == 0) {
-            WINDOW->da_window.arr[i]  = result;
-            break;
-        }
-    }
-
-    /* da_window is exhausted, we must resize it.
-     * After that we must append the window to newly - resized da_window.
-     * */
-    if (i == WINDOW->da_window.cap) {
-        WINDOW->da_window.cap *= 1.5;
-        WINDOW->da_window.arr  = realloc(WINDOW->da_window.arr, WINDOW->da_window.cap * sizeof(t_window));
-        if (!WINDOW->da_window.arr) { return (0); }
-
-        for ( ; i< WINDOW->da_window.cap; i++) {
-            /* set the first `null` window object to the current window */
-            if (WINDOW->da_window.arr[i] == 0) {
-                WINDOW->da_window.arr[i]  = result;
-                break;
-            }
-        }
-    }
-
-    /* set the `result` object as `win` return object */
+    /* append the window to platform's window linked list */
+    result->next   = WINDOW->win_ll;
+    WINDOW->win_ll = result; 
+    /* and return the result */
     *win = result;
-    
+
     /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -1968,21 +1961,32 @@ WINDEF int win_windestroy(t_window win) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
-    /* erase window from da_window */
-    for (size_t i = 0; i < WINDOW->da_window.cap; i++) {
-        if (win == WINDOW->da_window.arr[i]) {
-            WINDOW->da_window.arr[i] = 0;
-            break;
+    /* unlink the node from platform's window linked list */
+    t_window *curr = &WINDOW->win_ll;
+    if (win == (*curr)) {
+        WINDOW->win_ll = (*curr)->next;
+    }
+    else {
+        /* go until the next node is out `win` */
+        while ((*curr) && (*curr)->next != win) {
+            (*curr) = (*curr)->next;
         }
+        
+        /* check if we found anything */
+        if (!(*curr)) {
+            return (0);
+        }
+        
+        (*curr) = win->next;
     }
 
-    /* destroy window's components */
-    XDestroyWindow(win->xlib.dpy, win->xlib.w_id);
+    /* ... */
     
     /* deallocate window object */
     free(win);
 
     /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -1993,9 +1997,6 @@ WINDEF int win_winmap(t_window win) {
     if (!win)    { return (0); }
 
     /* ... */
-
-
-    XMapWindow(win->xlib.dpy, win->xlib.w_id);
 
     /* success */
     return (1);
@@ -2008,9 +2009,6 @@ WINDEF int win_winunmap(t_window win) {
     if (!win)    { return (0); }
 
     /* ... */
-
-
-    XUnmapWindow(win->xlib.dpy, win->xlib.w_id);
 
     /* success */
     return (1);
@@ -2182,21 +2180,11 @@ WINDEF int win_eventpoll(t_event *event) {
     /* poll events from platform queue */
     if (win_eventpop(event)) { return (1); }
 
-    /* ... */
-
-
     /* handle platform events */
     __win_eventpoll_x11();
 
-    /* no events in the queue
-     * it usually means we can break from a loop that iterates until there's no event in the queue left
-     * so returning `false` seems reasonable
-     * Also, it's wise to return `WINDOW_EVENT_NONE` event type
-     * */
-    *event = (t_event) {
-        .type = WINDOW_EVENT_NONE
-    };
-
+    /* queue filled, return WINDOW_EVENT_NONE */
+    *event = (t_event) { 0 };
     return (0);
 }
 
@@ -2219,29 +2207,38 @@ WINDEF int win_eventpush(t_event *event) {
     if (!WINDOW) { return (0); }
     if (!event)  { return (0); }
 
-    /* bounds-check */
+    /* alloc new `arr` if needed */
+    if (!WINDOW->da_event.arr) {
+        t_event *arr = malloc(WINDOW_EVENT_QUEUE_CAPACITY * sizeof(t_event));
+        if (!arr) { return (0); }
+
+        WINDOW->da_event.arr = WINDOW->da_event.arr_s = WINDOW->da_event.arr_e = arr;
+        WINDOW->da_event.cap = WINDOW_EVENT_QUEUE_CAPACITY;
+        WINDOW->da_event.cnt = 0;
+    }
+
+    /* bound check */
     if (WINDOW->da_event.cnt >= WINDOW->da_event.cap) {
-        WINDOW->da_event.cap *= 1.5;
-        WINDOW->da_event.arr = realloc(WINDOW->da_event.arr, WINDOW->da_event.cap * sizeof(t_event));
-        if (!WINDOW->da_event.arr) { return (0); }
+        /* consider resizing
+         * for now returning
+         * */
+        return (0);
     }
 
-    /* tail-coalescing */
-    if (WINDOW->da_event.cnt > 0) {
-        t_event *tail = &WINDOW->da_event.arr[WINDOW->da_event.cnt - 1];
-        if (tail->type == event->type && __win_coalescable_x11(event->type)) {
-            if (tail->type == WINDOW_EVENT_MOUSE_MOTION  ||
-                tail->type == WINDOW_EVENT_WINDOW_MOTION ||
-                tail->type == WINDOW_EVENT_WINDOW_RESIZE
-            ) {
-                *tail = *event;
-                return (1);
-            }
-        }
+    /* assign the object to the last `arr` element */
+    *WINDOW->da_event.arr_e = *event;
+    /* move the last element by one */
+    WINDOW->da_event.arr_e++;
+    /* boundary check
+     * if exceeds the `arr`, return back to start
+     * */
+    size_t arr_e_idx = WINDOW->da_event.arr_e - WINDOW->da_event.arr;
+    if (arr_e_idx >= WINDOW->da_event.cap) {
+        WINDOW->da_event.arr_e = WINDOW->da_event.arr;
     }
 
-    /* copy-assignment event object to event queue */
-    WINDOW->da_event.arr[WINDOW->da_event.cnt++] = *event;
+    /* increment the count */
+    WINDOW->da_event.cnt++;
 
     /* success */
     return (1);
@@ -2252,23 +2249,28 @@ WINDEF int win_eventpop(t_event *event) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!event)  { return (0); }
+    
+    /* check if event queue exists */
+    if (!WINDOW->da_event.arr) { return (0); }
 
-    /* bounds-check */
+    /* check if there's anything in the queue */
     if (WINDOW->da_event.cnt == 0) { return (0); }
 
-    /* copy to `event` pointer */
-    *event = WINDOW->da_event.arr[0];
-
-    /* move all the event objects one place to the front */
-    size_t i = 0;
-    for ( ; i < WINDOW->da_event.cnt - 1; i++) {
-        WINDOW->da_event.arr[i] = WINDOW->da_event.arr[i + 1];
+    /* assign the first element to the reference */
+    *event = *WINDOW->da_event.arr_s;
+    /* zero-down the first element (safety matter) */
+    *WINDOW->da_event.arr_s = (t_event) { 0 };
+    /* move the first element by one */
+    WINDOW->da_event.arr_s++;
+    /* boundary check
+     * if exceeds the `arr`, return back to start
+     * */
+    size_t arr_s_idx = WINDOW->da_event.arr_s - WINDOW->da_event.arr;
+    if (arr_s_idx >= WINDOW->da_event.cap) {
+        WINDOW->da_event.arr_s = WINDOW->da_event.arr;
     }
 
-    /* set last queue element to `zero` */
-    WINDOW->da_event.arr[i] = (t_event) { 0 };
-
-    /* and decrement the size of the queue */
+    /* decrement the count */
     WINDOW->da_event.cnt--;
 
     /* success */
