@@ -11,7 +11,7 @@ int main(void) {
     }
 
     t_window win;
-    win_wincreate(&win, 800, 600, "Hello, window.h", 0);
+    win_wincreate(&win, 800, 600, "Hello, window.h", WINDOW_FLAG_MINIMIZED | WINDOW_FLAG_RESIZABLE);
     win_winmap(win);
 
     int exit = 0;
