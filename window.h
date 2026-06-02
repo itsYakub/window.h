@@ -941,11 +941,6 @@ struct s_window {
         Window   parent;
         Window   child;
     } xlib;
-    
-    struct {
-        Atom wm_protocols;
-        Atom wm_delete_window;
-    } xatom;
 
     struct {
         XVisualInfo visual;
@@ -1246,11 +1241,8 @@ WININT t_window __win_wincreate_x11(Display *dpy, Window parent, const size_t w,
     if (!child) { goto __win_wincreate_x11_failure; }
     result->xlib.child = child;
     
-    result->xatom.wm_protocols = WINDOW->xatom.wm_protocols;
-    XSetWMProtocols(result->xlib.dpy, result->xlib.child, &result->xatom.wm_protocols, 1);
-    
-    result->xatom.wm_delete_window = WINDOW->xatom.wm_delete_window;
-    XSetWMProtocols(result->xlib.dpy, result->xlib.child, &result->xatom.wm_delete_window, 1);
+    XSetWMProtocols(result->xlib.dpy, result->xlib.child, &WINDOW->xatom.wm_protocols, 1);
+    XSetWMProtocols(result->xlib.dpy, result->xlib.child, &WINDOW->xatom.wm_delete_window, 1);
     
     XSelectInput(result->xlib.dpy, result->xlib.child, attr.event_mask);
 
