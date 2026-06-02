@@ -71,6 +71,7 @@ enum {
     /* ... */
 };
 
+
 enum {
     WINDOW_KEY_NONE = 0,
 # define WINDOW_KEY_NONE WINDOW_KEY_NONE
@@ -384,7 +385,6 @@ enum {
     /* ... */
 };
 
-/* library functions */
 
 enum {
     WINDOW_PROP_PLATFORM_NONE = 0,
@@ -404,15 +404,6 @@ enum {
     /* ... */
 };
 
-WINDEF int win_init(void);
-
-WINDEF int win_quit(void);
-
-WINDEF int win_getsize(size_t *, size_t *);
-
-WINDEF void *win_getprop(const uint64_t);
-
-/* windowing functions */
 
 enum {
     WINDOW_PROP_WINDOW_NONE = 0,
@@ -435,43 +426,6 @@ enum {
     /* ... */
 };
 
-typedef struct s_window *t_window;
-
-WINDEF int win_wincreate(t_window *, const size_t, const size_t, const char *, const uint64_t);
-
-WINDEF int win_wincreatenest(t_window *, t_window, const size_t, const size_t, const char *, const uint64_t);
-
-WINDEF int win_windestroy(t_window);
-
-WINDEF int win_winmap(t_window);
-
-WINDEF int win_winunmap(t_window);
-
-WINDEF int win_wingetsize(t_window, size_t *, size_t *);
-
-WINDEF int win_winsetsize(t_window, const size_t, const size_t);
-
-WINDEF int win_winsetsizemin(t_window, const size_t, const size_t);
-
-WINDEF int win_winsetsizemax(t_window, const size_t, const size_t);
-
-WINDEF int win_wingetpos(t_window, size_t *, size_t *);
-
-WINDEF int win_winsetpos(t_window, const size_t, const size_t);
-
-WINDEF int win_winsetminim(t_window);
-
-WINDEF int win_winsetmaxim(t_window);
-
-WINDEF int win_winsetfullscr(t_window);
-
-WINDEF int win_wingettitle(t_window, char **);
-
-WINDEF int win_winsettitle(t_window, const char *);
-
-WINDEF void *win_wingetprop(t_window, const uint64_t);
-
-/* event functions */
 
 enum {
 
@@ -505,6 +459,9 @@ enum {
 # define WINDOW_EVENT_COUNT WINDOW_EVENT_COUNT
 
 };
+
+
+typedef struct s_window *t_window;
 
 
 typedef struct s_eventCommon t_eventCommon;
@@ -595,6 +552,55 @@ union u_event {
     /* window event */
     t_eventWindow window;
 };
+
+/* library functions */
+
+WINDEF int win_init(void);
+
+WINDEF int win_quit(void);
+
+WINDEF int win_getsize(size_t *, size_t *);
+
+WINDEF void *win_getprop(const uint64_t);
+
+/* windowing functions */
+
+WINDEF int win_wincreate(t_window *, const size_t, const size_t, const char *, const uint64_t);
+
+WINDEF int win_wincreatenest(t_window *, t_window, const size_t, const size_t, const char *, const uint64_t);
+
+WINDEF int win_windestroy(t_window);
+
+WINDEF int win_winmap(t_window);
+
+WINDEF int win_winunmap(t_window);
+
+WINDEF int win_wingetsize(t_window, size_t *, size_t *);
+
+WINDEF int win_winsetsize(t_window, const size_t, const size_t);
+
+WINDEF int win_winsetsizemin(t_window, const size_t, const size_t);
+
+WINDEF int win_winsetsizemax(t_window, const size_t, const size_t);
+
+WINDEF int win_wingetpos(t_window, size_t *, size_t *);
+
+WINDEF int win_winsetpos(t_window, const size_t, const size_t);
+
+WINDEF int win_winsetminim(t_window);
+
+WINDEF int win_winsetmaxim(t_window);
+
+WINDEF int win_winsetfullscr(t_window);
+
+WINDEF int win_wingettitle(t_window, char **);
+
+WINDEF int win_winsettitle(t_window, const char *);
+
+WINDEF void *win_wingetprop(t_window, const uint64_t);
+
+/* event functions */
+
 
 WINDEF int win_eventpoll(t_event *);
 
