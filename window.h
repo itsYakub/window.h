@@ -484,9 +484,6 @@ enum {
     
     WINDOW_FLAG_UNDECORATED = 0x00000040,
 # define WINDOW_FLAG_UNDECORATED WINDOW_FLAG_UNDECORATED
-    
-    WINDOW_FLAG_BORDERLESS = 0x00000080,
-# define WINDOW_FLAG_BORDERLESS WINDOW_FLAG_BORDERLESS
 
     /* ... */
 };
@@ -622,7 +619,7 @@ WINDEF int win_wingettitle(t_window, char **);
 
 WINDEF int win_winsettitle(t_window, const char *);
 
-WINDEF int win_winsetconfig(t_window, const uint32_t);
+WINDEF int win_winsetcfg(t_window, const uint32_t);
 
 WINDEF void *win_wingetprop(t_window, const uint64_t);
 
@@ -662,6 +659,11 @@ WINDEF int win_timewait(uint64_t);
 #   include <X11/XKBlib.h>
 #   include <X11/keysym.h>
 #   include <X11/keysymdef.h>
+#
+#   define _NET_WM_STATE_REMOVE	0
+#   define _NET_WM_STATE_ADD	1
+#   define _NET_WM_STATE_TOGGLE	2
+
 
 struct s_keymap {
     uint32_t src;
@@ -949,8 +951,20 @@ struct s_platform {
     } xlib;
 
     struct {
+        /* Atoms: WM */
         Atom wm_protocols;
         Atom wm_delete_window;
+
+		/* Atoms: MOTIF */
+		Atom _motif_wm_hints;
+
+		/* Atoms: EWMH */
+		Atom _net_wm_state;
+		Atom _net_wm_state_above;
+		Atom _net_wm_state_fullscreen;
+		Atom _net_wm_state_hidden;
+		Atom _net_wm_state_maximized_horz;
+		Atom _net_wm_state_maximized_vert;
     } xatom;
 
     struct {
@@ -989,6 +1003,9 @@ struct s_window {
 
         /* flag attributes */
         uint32_t f;
+
+        /* is window mapped? */
+        uint8_t mapped;
     } attr;
 };
 
@@ -1023,13 +1040,39 @@ WINDEF int win_init(void) {
     /* retrieve atoms from x11 session */
     Atom wm_protocols = XInternAtom(dpy, "WM_PROTOCOLS", False);
     if (!wm_protocols) { goto __win_init_failure; }
+    WINDOW->xatom.wm_protocols = wm_protocols;
     
     Atom wm_delete_window = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
     if (!wm_delete_window) { goto __win_init_failure; }
-    
-    /* assign data to `xatom` platform section */
-    WINDOW->xatom.wm_protocols     = wm_protocols;
     WINDOW->xatom.wm_delete_window = wm_delete_window;
+    
+    Atom _motif_wm_hints = XInternAtom(dpy, "_MOTIF_WM_HINTS", False);
+	if (!_motif_wm_hints) { goto __win_init_failure; }
+    WINDOW->xatom._motif_wm_hints = _motif_wm_hints;
+
+    Atom _net_wm_state = XInternAtom(dpy, "_NET_WM_STATE", False);
+	if (!_net_wm_state) { goto __win_init_failure; }
+    WINDOW->xatom._net_wm_state = _net_wm_state;
+
+    Atom _net_wm_state_above = XInternAtom(dpy, "_NET_WM_STATE_ABOVE", False);
+	if (!_net_wm_state_above) { goto __win_init_failure; }
+    WINDOW->xatom._net_wm_state_above = _net_wm_state_above;
+
+    Atom _net_wm_state_fullscreen = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
+	if (!_net_wm_state_fullscreen) { goto __win_init_failure; }
+    WINDOW->xatom._net_wm_state_fullscreen = _net_wm_state_fullscreen;
+
+    Atom _net_wm_state_hidden = XInternAtom(dpy, "_NET_WM_STATE_HIDDEN", False);
+	if (!_net_wm_state_hidden) { goto __win_init_failure; }
+    WINDOW->xatom._net_wm_state_hidden = _net_wm_state_hidden;
+
+    Atom _net_wm_state_maximized_horz = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_HORZ", False);
+	if (!_net_wm_state_maximized_horz) { goto __win_init_failure; }
+    WINDOW->xatom._net_wm_state_maximized_horz = _net_wm_state_maximized_horz;
+
+    Atom _net_wm_state_maximized_vert = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_VERT", False);
+	if (!_net_wm_state_maximized_vert) { goto __win_init_failure; }
+    WINDOW->xatom._net_wm_state_maximized_vert = _net_wm_state_maximized_vert;
 
     /* set default config values */
     WINDOW->config.depth = 24;
@@ -1146,7 +1189,7 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
                                           w, h);
     if (!result) { goto __win_wincreate_failure; }
    
-    win_winsetconfig(result, f);
+    win_winsetcfg(result, f);
     win_winsettitle(result, t);
     win_wingetpos(result, &result->attr.x, &result->attr.y);
     win_wingetsize(result, &result->attr.w, &result->attr.h);
@@ -1185,16 +1228,12 @@ WINDEF int win_wincreatenest(t_window *win, t_window parent, const size_t w, con
     /* check if parent is valid */
     if (!parent->xlib.client) { return (0); }
     
-    /* NOTE:
-     *  Temporarily disabled parameter
-     * */
-    (void) f;
-   
     t_window result = __win_wincreate_x11(parent->xlib.dpy,
                                           parent->xlib.client,
                                           w, h);
     if (!result) { goto __win_wincreatenest_failure; }
    
+    win_winsetcfg(result, f);
     win_winsettitle(result, t);
     win_wingetpos(result, &result->attr.x, &result->attr.y);
     win_wingetsize(result, &result->attr.w, &result->attr.h);
@@ -1225,7 +1264,7 @@ __win_wincreatenest_failure:
 
 WININT t_window __win_wincreate_x11(Display *dpy, Window parent, const size_t w, const size_t h) {
     /* alloc result */
-    t_window result = malloc(sizeof(struct s_window));
+    t_window result = calloc(1, sizeof(struct s_window));
     if (!result) { goto __win_wincreate_x11_failure; } 
 
     /* assign references to X11 objects */
@@ -1332,6 +1371,8 @@ WINDEF int win_winmap(t_window win) {
     if (!win)    { return (0); }
 
     XMapWindow(win->xlib.dpy, win->xlib.client);
+    XSync(win->xlib.dpy, 0);
+    win->attr.mapped = 1;
 
     /* success */
     return (1);
@@ -1344,6 +1385,8 @@ WINDEF int win_winunmap(t_window win) {
     if (!win)    { return (0); }
 
     XUnmapWindow(win->xlib.dpy, win->xlib.client);
+    XSync(win->xlib.dpy, 0);
+    win->attr.mapped = 0;
 
     /* success */
     win_eventflush();
@@ -1395,7 +1438,7 @@ WINDEF int win_winsetsizemin(t_window win, const size_t w, const size_t h) {
     XGetWMNormalHints(win->xlib.dpy, win->xlib.client, &hints, &supp);
 
     /* set new WM normal hints with position changed */
-    hints.flags = PMinSize;
+    hints.flags |= PMinSize;
     hints.min_width  = w;
     hints.min_height = h;
     XSetWMNormalHints(win->xlib.dpy, win->xlib.client, &hints);
@@ -1417,7 +1460,7 @@ WINDEF int win_winsetsizemax(t_window win, const size_t w, const size_t h) {
     XGetWMNormalHints(win->xlib.dpy, win->xlib.client, &hints, &supp);
 
     /* set new WM normal hints with position changed */
-    hints.flags = PMaxSize;
+    hints.flags |= PMaxSize;
     hints.max_width  = w;
     hints.max_height = h;
     XSetWMNormalHints(win->xlib.dpy, win->xlib.client, &hints);
@@ -1452,16 +1495,8 @@ WINDEF int win_winsetpos(t_window win, const size_t x, const size_t y) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
-    /* get WM normal hints */
-    XSizeHints hints;
-    int64_t supp;
-    XGetWMNormalHints(win->xlib.dpy, win->xlib.client, &hints, &supp);
-
-    /* set new WM normal hints with position changed */
-    hints.flags = PPosition;
-    hints.x = x;
-    hints.y = y;
-    XSetWMNormalHints(win->xlib.dpy, win->xlib.client, &hints);
+    /* move */
+    if (!XMoveWindow(win->xlib.dpy, win->xlib.client, x, y)) { return (0); }
 
     /* success */
     win_eventflush();
@@ -1502,65 +1537,183 @@ WINDEF int win_winsettitle(t_window win, const char *t) {
 }
 
 
-WINDEF int win_winsetconfig(t_window win, const uint32_t f) {
+WININT int __win_updatecfg_x11(t_window);
+
+WININT int __win_updatecfg_map_x11(t_window);
+
+WININT int __win_updatecfg_unmap_x11(t_window);
+
+WINDEF int win_winsetcfg(t_window win, const uint32_t f) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
-    if (!f)      { return (0); }
 
-    /* handle fullscr / minim / maxim states */
-    if (f & WINDOW_FLAG_FULLSCREEN) {
-        printf("WINDOW_FLAG_FULLSCREEN\n");
-    }
-
-    if (f & WINDOW_FLAG_MINIMIZED) {
-        printf("WINDOW_FLAG_MINIMIZED\n");
-    }
-
-    if (f & WINDOW_FLAG_MAXIMIZED) {
-        printf("WINDOW_FLAG_MAXIMIZED\n");
-    }
-
-    if (f & WINDOW_FLAG_RESIZABLE) {
-        printf("WINDOW_FLAG_RESIZABLE\n");
-    }
-
-    if (f & WINDOW_FLAG_TOPMOST) {
-        printf("WINDOW_FLAG_TOPMOST\n");
-    }
-
-    if (f & WINDOW_FLAG_TRANSPARENT) {
-        printf("WINDOW_FLAG_TRANSPARENT\n");
-    }
-
-    if (f & WINDOW_FLAG_UNDECORATED) {
-        printf("WINDOW_FLAG_UNDECORATED\n");
-    }
-
-    if (f & WINDOW_FLAG_BORDERLESS) {
-        printf("WINDOW_FLAG_BORDERLESS\n");
-    }
-
-    /* ... */
-
-    /* update flags */
     win->attr.f = f;
-
-    /* send an update event to x11 */
-    XMapEvent event = {
-        .type    = MapNotify,
-        .display = win->xlib.dpy,
-        .window  = win->xlib.client,
-    };
-
-    XSendEvent(win->xlib.dpy,
-               win->xlib.client,
-               0, 0,
-               (XEvent *) &event);
-
-    /* success */
+    __win_updatecfg_x11(win);
     win_eventflush();
 	return (1);
+}
+
+WININT int __win_updatecfg_x11(t_window win) {
+    /* null-check */
+    if (!WINDOW) { return (0); }
+    if (!win)    { return (0); }
+
+    if (win->attr.mapped) {
+        __win_updatecfg_map_x11(win);
+    } else {
+        __win_updatecfg_unmap_x11(win);
+    }
+
+    win_eventflush();
+    return (1);
+}
+
+WININT int __win_updatecfg_map_x11(t_window win) {
+    /* null-check */
+    if (!WINDOW) { return (0); }
+    if (!win)    { return (0); }
+    
+    /* prepare events */
+    XClientMessageEvent client= { 
+        .type = ClientMessage,
+        .display = win->xlib.dpy,
+        .window = win->xlib.client,
+        .message_type = WINDOW->xatom._net_wm_state,
+        .format = 32,
+        .data = {
+            .l = { 0 }
+        }
+    };
+    
+    if (win->attr.f & WINDOW_FLAG_FULLSCREEN) {
+        XClientMessageEvent fullscr = client;
+        fullscr.data.l[0] = _NET_WM_STATE_ADD; 
+        fullscr.data.l[1] = WINDOW->xatom._net_wm_state_fullscreen;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &fullscr);
+    } else {
+        XClientMessageEvent fullscr = client;
+        fullscr.data.l[0] = _NET_WM_STATE_REMOVE; 
+        fullscr.data.l[1] = WINDOW->xatom._net_wm_state_fullscreen;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &fullscr);
+    }
+
+    if (win->attr.f & WINDOW_FLAG_MINIMIZED) {
+        XClientMessageEvent minim = client;
+        minim.data.l[0] = _NET_WM_STATE_ADD;
+        minim.data.l[1] = WINDOW->xatom._net_wm_state_hidden;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &minim);
+    } else {
+        XClientMessageEvent minim = client;
+        minim.data.l[0] = _NET_WM_STATE_REMOVE;
+        minim.data.l[1] = WINDOW->xatom._net_wm_state_hidden;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &minim);
+	}
+
+    if (win->attr.f & WINDOW_FLAG_MAXIMIZED) {
+        XClientMessageEvent maxim = client;
+        maxim.data.l[0] = _NET_WM_STATE_ADD;
+        maxim.data.l[1] = WINDOW->xatom._net_wm_state_maximized_horz;
+        maxim.data.l[2] = WINDOW->xatom._net_wm_state_maximized_vert;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &maxim);
+    } else {
+        XClientMessageEvent maxim = client;
+        maxim.data.l[0] = _NET_WM_STATE_REMOVE;
+        maxim.data.l[1] = WINDOW->xatom._net_wm_state_maximized_horz;
+        maxim.data.l[2] = WINDOW->xatom._net_wm_state_maximized_vert;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &maxim);
+	}
+
+    if (win->attr.f & WINDOW_FLAG_RESIZABLE) {
+        win_winsetsizemin(win, 1, 1);
+        win_winsetsizemax(win, 0x10000000, 0x10000000);
+    } else {
+        size_t w = 0,
+               h = 0;
+        win_wingetsize(win, &w, &h);
+        win_winsetsizemin(win, w, h);
+        win_winsetsizemax(win, w, h);
+    }
+
+    if (win->attr.f & WINDOW_FLAG_TOPMOST) {
+        XClientMessageEvent topmost = client;
+        topmost.data.l[0] = _NET_WM_STATE_ADD;
+        topmost.data.l[1] = WINDOW->xatom._net_wm_state_above;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &topmost);
+    } else {
+        XClientMessageEvent topmost = client;
+        topmost.data.l[0] = _NET_WM_STATE_REMOVE;
+        topmost.data.l[1] = WINDOW->xatom._net_wm_state_above;
+        XSendEvent(win->xlib.dpy, WINDOW->xlib.root, 0, SubstructureRedirectMask | SubstructureNotifyMask, (XEvent *) &topmost);
+	}
+
+    if (win->attr.f & WINDOW_FLAG_TRANSPARENT) {
+    } else {
+	}
+
+    if (win->attr.f & WINDOW_FLAG_UNDECORATED) {
+    } else {
+	}
+
+    return (1);
+}
+
+WININT int __win_updatecfg_unmap_x11(t_window win) {
+    /* null-check */
+    if (!WINDOW) { return (0); }
+    if (!win)    { return (0); }
+  
+    if (win->attr.f & WINDOW_FLAG_FULLSCREEN) {
+        Atom state = WINDOW->xatom._net_wm_state_fullscreen;
+        XChangeProperty(win->xlib.dpy, win->xlib.client,
+                        WINDOW->xatom._net_wm_state, XA_ATOM,
+                        32, PropModeReplace,
+                        (uint8_t *) &state, 1);
+	} else { /* ... */ }
+    
+    if (win->attr.f & WINDOW_FLAG_MINIMIZED) {
+        Atom state = WINDOW->xatom._net_wm_state_hidden;
+        XChangeProperty(win->xlib.dpy, win->xlib.client,
+                        WINDOW->xatom._net_wm_state, XA_ATOM,
+                        32, PropModeReplace,
+                        (uint8_t *) &state, 1);
+	} else { /* ... */ }
+
+    if (win->attr.f & WINDOW_FLAG_MAXIMIZED) {
+        Atom states[2] = {
+            WINDOW->xatom._net_wm_state_maximized_horz,
+            WINDOW->xatom._net_wm_state_maximized_vert
+        };
+        XChangeProperty(win->xlib.dpy, win->xlib.client,
+                        WINDOW->xatom._net_wm_state, XA_ATOM,
+                        32, PropModeReplace,
+                        (uint8_t *) states, 2);
+	} else { /* ... */ }
+
+    if (win->attr.f & WINDOW_FLAG_RESIZABLE) {
+        win_winsetsizemin(win, 1, 1);
+        win_winsetsizemax(win, 0x10000000, 0x10000000);
+    } else {
+        size_t w = 0,
+               h = 0;
+        win_wingetsize(win, &w, &h);
+        win_winsetsizemin(win, w, h);
+        win_winsetsizemax(win, w, h);
+    }
+
+    if (win->attr.f & WINDOW_FLAG_TOPMOST) {
+    } else {
+	}
+
+    if (win->attr.f & WINDOW_FLAG_TRANSPARENT) {
+    } else {
+	}
+
+    if (win->attr.f & WINDOW_FLAG_UNDECORATED) {
+    } else {
+	}
+
+    return (1);
 }
 
 
