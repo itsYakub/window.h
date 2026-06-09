@@ -7,7 +7,7 @@
 #
 # /* WINDEF (window.h API) - global functions */
 # if !defined (WINDEF)
-#  define WINDEF extern inline
+#  define WINDEF extern
 # endif /* WINDEF */
 #
 # /* WININT (window.h internal API) - internal static functions */
