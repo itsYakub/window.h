@@ -619,7 +619,7 @@ WINDEF int win_wingettitle(t_window, char **);
 
 WINDEF int win_winsettitle(t_window, const char *);
 
-WINDEF int win_winsetcfg(t_window, const uint32_t);
+WINDEF int win_winsetflag(t_window, const uint32_t);
 
 WINDEF void *win_wingetprop(t_window, const uint64_t);
 
@@ -1194,7 +1194,7 @@ WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const ch
                                           w, h);
     if (!result) { goto __win_wincreate_failure; }
    
-    win_winsetcfg(result, f);
+    win_winsetflag(result, f);
     win_winsettitle(result, t);
     win_wingetpos(result, &result->attr.x, &result->attr.y);
     win_wingetsize(result, &result->attr.w, &result->attr.h);
@@ -1238,7 +1238,7 @@ WINDEF int win_wincreatenest(t_window *win, t_window parent, const size_t w, con
                                           w, h);
     if (!result) { goto __win_wincreatenest_failure; }
    
-    win_winsetcfg(result, f);
+    win_winsetflag(result, f);
     win_winsettitle(result, t);
     win_wingetpos(result, &result->attr.x, &result->attr.y);
     win_wingetsize(result, &result->attr.w, &result->attr.h);
@@ -1548,7 +1548,7 @@ WININT int __win_updatecfg_map_x11(t_window);
 
 WININT int __win_updatecfg_unmap_x11(t_window);
 
-WINDEF int win_winsetcfg(t_window win, const uint32_t f) {
+WINDEF int win_winsetflag(t_window win, const uint32_t f) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }

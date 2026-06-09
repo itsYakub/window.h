@@ -26,7 +26,7 @@ int main(void) {
                 } break;
                 case (WINDOW_EVENT_KEYBOARD_KEY): {
                     if (event.key.key == WINDOW_KEY_SPACE) {
-                        win_winsetcfg(win, WINDOW_FLAG_FULLSCREEN);
+                        win_winsetflag(win, WINDOW_FLAG_FULLSCREEN);
                     }
                 } break;
             }
