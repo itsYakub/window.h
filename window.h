@@ -1019,7 +1019,7 @@ WINDEF int win_init(void) {
     if (WINDOW) { return (1); } /* check if `WINDOW` is not null. If so, return */
 
     /* alloc global platfom object */
-    WINDOW = malloc(sizeof(struct s_platform));
+    WINDOW = calloc(1, sizeof(struct s_platform));
     if (!WINDOW) { goto __win_init_failure; }
 
     /* connect to x11 server */
