@@ -11,7 +11,7 @@ int main(void) {
     }
 
     t_window win;
-    win_wincreate(&win, 800, 600, "Hello, window.h", 0);
+    win_wincreate(&win, 800, 600, "Hello, window.h", WINDOW_FLAG_FULLSCREEN);
     win_winmap(win);
 
     int exit = 0;
@@ -23,6 +23,11 @@ int main(void) {
                 case (WINDOW_EVENT_QUIT): {
                     printf("WINDOW_EVENT_QUIT\n");
                     exit = 1;
+                } break;
+                case (WINDOW_EVENT_KEYBOARD_KEY): {
+                    if (event.key.key == WINDOW_KEY_SPACE) {
+                        win_winsetcfg(win, WINDOW_FLAG_FULLSCREEN);
+                    }
                 } break;
             }
         }

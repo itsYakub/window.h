@@ -1553,7 +1553,7 @@ WINDEF int win_winsetcfg(t_window win, const uint32_t f) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
-    win->attr.f = f;
+    win->attr.f ^= f;
     __win_updatecfg_x11(win);
     win_eventflush();
 	return (1);
@@ -1658,19 +1658,19 @@ WININT int __win_updatecfg_map_x11(t_window win) {
     }
 
     if (win->attr.f & WINDOW_FLAG_TRANSPARENT) {
-        uint64_t opacity = 0x00000000UL;
+        long opacity = 0x00000000UL;
         XChangeProperty(dpy, client, WINDOW->xatom._net_wm_window_opacity, XA_CARDINAL, 32, PropModeReplace, (uint8_t *) &opacity, 1);
     } else {
         XDeleteProperty(dpy, client, WINDOW->xatom._net_wm_window_opacity);
 	}
 
     if (win->attr.f & WINDOW_FLAG_UNDECORATED) {
-        uint64_t mwmhints[8] = { 0 };
+        long mwmhints[8] = { 0 };
         mwmhints[0] = (1L << 1);
         mwmhints[2] = _NET_WM_STATE_REMOVE;
         XChangeProperty(dpy, client, WINDOW->xatom._motif_wm_hints, XA_ATOM, 32, PropModeReplace, (uint8_t *) mwmhints, 8);
     } else {
-        uint64_t mwmhints[8] = { 0 };
+        long mwmhints[8] = { 0 };
         mwmhints[0] = (1L << 1);
         mwmhints[2] = _NET_WM_STATE_ADD;
         XChangeProperty(dpy, client, WINDOW->xatom._motif_wm_hints, XA_ATOM, 32, PropModeReplace, (uint8_t *) mwmhints, 8);
@@ -1725,19 +1725,19 @@ WININT int __win_updatecfg_unmap_x11(t_window win) {
     }
 
     if (win->attr.f & WINDOW_FLAG_TRANSPARENT) {
-        uint64_t opacity = 0x00000000UL;
+        long opacity = 0x00000000UL;
         XChangeProperty(dpy, client, WINDOW->xatom._net_wm_window_opacity, XA_CARDINAL, 32, PropModeReplace, (uint8_t *) &opacity, 1);
     } else {
         XDeleteProperty(dpy, client, WINDOW->xatom._net_wm_window_opacity);
 	}
 
     if (win->attr.f & WINDOW_FLAG_UNDECORATED) {
-        uint64_t mwmhints[8] = { 0 };
+        long mwmhints[8] = { 0 };
         mwmhints[0] = (1L << 1);
         mwmhints[2] = _NET_WM_STATE_REMOVE;
         XChangeProperty(dpy, client, WINDOW->xatom._motif_wm_hints, XA_ATOM, 32, PropModeReplace, (uint8_t *) mwmhints, 8);
     } else {
-        uint64_t mwmhints[8] = { 0 };
+        long mwmhints[8] = { 0 };
         mwmhints[0] = (1L << 1);
         mwmhints[2] = _NET_WM_STATE_ADD;
         XChangeProperty(dpy, client, WINDOW->xatom._motif_wm_hints, XA_ATOM, 32, PropModeReplace, (uint8_t *) mwmhints, 8);
