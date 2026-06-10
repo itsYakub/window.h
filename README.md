@@ -72,7 +72,7 @@ to keep the code clean and tidy as much as possible.
 The general template of the API implementation is provided at the bottom of the `window.h` file.
 It provides the common definitions of what the library should do PLUS `/* ... */` marks reserved for the platform-specific code.
 
-Then, as follows, follow the steps from [1. Contribute changes](### 1. Contributing changes.).
+Then, as follows, follow the steps from previous step. 
  
 ## Resources
 
