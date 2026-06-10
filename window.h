@@ -1109,7 +1109,7 @@ __win_init_failure:
     /* release WINDOW */
     if (WINDOW) { free(WINDOW), WINDOW = 0; }
 
-    /* success */
+    /* failure */
     return (0);
 }
 
@@ -1182,14 +1182,14 @@ WINDEF void *win_getprop(const uint64_t prop) {
 
 /* windowing functions */
 
-WININT t_window __win_wincreate_x11(Display *, Window, const size_t, const size_t);
+WININT t_window __win_wincreate(Display *, Window, const size_t, const size_t);
 
 WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const char *t, const uint32_t f) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
     
-    t_window result = __win_wincreate_x11(WINDOW->xlib.dpy,
+    t_window result = __win_wincreate(WINDOW->xlib.dpy,
                                           WINDOW->xlib.root,
                                           w, h);
     if (!result) { goto __win_wincreate_failure; }
@@ -1233,7 +1233,7 @@ WINDEF int win_wincreatenest(t_window *win, t_window parent, const size_t w, con
     /* check if parent is valid */
     if (!parent->xlib.client) { return (0); }
     
-    t_window result = __win_wincreate_x11(parent->xlib.dpy,
+    t_window result = __win_wincreate(parent->xlib.dpy,
                                           parent->xlib.client,
                                           w, h);
     if (!result) { goto __win_wincreatenest_failure; }
@@ -1266,17 +1266,16 @@ __win_wincreatenest_failure:
     return (0);
 }
 
-
-WININT t_window __win_wincreate_x11(Display *dpy, Window parent, const size_t w, const size_t h) {
+WININT t_window __win_wincreate(Display *dpy, Window parent, const size_t w, const size_t h) {
     /* alloc result */
     t_window result = calloc(1, sizeof(struct s_window));
-    if (!result) { goto __win_wincreate_x11_failure; } 
+    if (!result) { goto __win_wincreate_failure; } 
 
     /* assign references to X11 objects */
-    if (!dpy) { goto __win_wincreate_x11_failure; }
+    if (!dpy) { goto __win_wincreate_failure; }
     result->xlib.dpy = dpy; 
     
-    if (!parent) { goto __win_wincreate_x11_failure; }
+    if (!parent) { goto __win_wincreate_failure; }
     result->xlib.parent = parent;
 
     /* get visual info */
@@ -1286,13 +1285,13 @@ WININT t_window __win_wincreate_x11(Display *dpy, Window parent, const size_t w,
                           WINDOW->config.class,
                           &result->xutil.visual)
     ) {
-        goto __win_wincreate_x11_failure;
+        goto __win_wincreate_failure;
     }
 
     /* colormap */
     XID colormap = XCreateColormap(dpy, parent, result->xutil.visual.visual, AllocNone);
     if (!colormap) {
-        goto __win_wincreate_x11_failure;
+        goto __win_wincreate_failure;
     }
 
     /* window attributes */
@@ -1316,7 +1315,7 @@ WININT t_window __win_wincreate_x11(Display *dpy, Window parent, const size_t w,
 
     /* create window */
     XID client = XCreateWindow(dpy, parent, 0, 0, w, h, 0, result->xutil.visual.depth, InputOutput, result->xutil.visual.visual, CWColormap | CWBorderPixel | CWBackPixel | CWEventMask, &attr);
-    if (!client) { goto __win_wincreate_x11_failure; }
+    if (!client) { goto __win_wincreate_failure; }
     result->xlib.client = client;
     
     XSetWMProtocols(result->xlib.dpy, result->xlib.client, &WINDOW->xatom.wm_protocols, 1);
@@ -1326,7 +1325,7 @@ WININT t_window __win_wincreate_x11(Display *dpy, Window parent, const size_t w,
 
     return (result);
 
-__win_wincreate_x11_failure:
+__win_wincreate_failure:
 
     if (result) { free(result), result = 0; }
 
@@ -1370,7 +1369,7 @@ WINDEF int win_windestroy(t_window win) {
 }
 
 
-WININT int __win_winupdateflag_x11(t_window);
+WININT int __win_winupdateflag(t_window);
 
 WINDEF int win_winsetflag(t_window win, const uint32_t f) {
     /* null-check */
@@ -1381,7 +1380,7 @@ WINDEF int win_winsetflag(t_window win, const uint32_t f) {
     win->attr.f ^= f;
 
     /* update window properties */
-    if (!__win_winupdateflag_x11(win)) {
+    if (!__win_winupdateflag(win)) {
         return (0);
     }
 
@@ -1390,7 +1389,7 @@ WINDEF int win_winsetflag(t_window win, const uint32_t f) {
     return (1);
 }
 
-WININT int __win_winupdateflag_x11(t_window win) {
+WININT int __win_winupdateflag(t_window win) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -1502,6 +1501,8 @@ WININT int __win_winupdateflag_x11(t_window win) {
         XChangeProperty(dpy, client, WINDOW->xatom._motif_wm_hints, WINDOW->xatom._motif_wm_hints, 32, PropModeReplace, (uint8_t *) mwmhints, 8);
     }
 
+    /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -1544,7 +1545,7 @@ WINDEF int win_winmap(t_window win) {
     win->attr.mapped = 1;
 
     /* update window properties */
-    if (!__win_winupdateflag_x11(win)) {
+    if (!__win_winupdateflag(win)) {
         return (0);
     }
 
@@ -1723,7 +1724,7 @@ WINDEF int win_winsettitle(t_window win, const char *t) {
 
 /* event functions */
 
-WININT int __win_eventpoll_x11(void);
+WININT int __win_eventpoll(void);
 
 WINDEF int win_eventpoll(t_event *event) {
     /* null-check */
@@ -1734,14 +1735,14 @@ WINDEF int win_eventpoll(t_event *event) {
     if (win_eventpop(event)) { return (1); }
 
     /* handle platform events */
-    __win_eventpoll_x11();
+    __win_eventpoll();
 
     /* queue filled, return WINDOW_EVENT_NONE */
     *event = (t_event) { 0 };
     return (0);
 }
     
-WININT int __win_eventpoll_x11(void) {
+WININT int __win_eventpoll(void) {
     /* null-check */
     if (!WINDOW) { return (0); }
     
@@ -2075,6 +2076,12 @@ struct s_window {
 
         /* dimension attributes */
         size_t w, h;
+
+        /* flag attributes */
+        uint32_t f;
+
+        /* is window mapped? */
+        uint8_t mapped;
     } attr;
 };
 
@@ -2086,27 +2093,29 @@ WINDEF int win_init(void) {
     /* manage global platform object */
     if (WINDOW) { return (1); } /* check if `WINDOW` is not null. If so, return */
 
-    WINDOW = malloc(sizeof(struct s_platform));
-    if (!WINDOW) {
-        return (0);
-    }
+    WINDOW = calloc(1, sizeof(struct s_platform));
+    if (!WINDOW) { goto __win_init_failure; }
 
     /* ... */
 
-    /* set up event queue */
+    /* initialize da_event */
+    WINDOW->da_event.arr = 0;
+    WINDOW->da_event.arr_s = 0;
+    WINDOW->da_event.arr_e = 0;
+    WINDOW->da_event.cap = 0;
     WINDOW->da_event.cnt = 0;
-    WINDOW->da_event.cap = 16;
-    WINDOW->da_event.arr = calloc(WINDOW->da_event.cap, sizeof(t_event));
-    if (!WINDOW->da_event.arr) { return (0); }
-
-    /* set up window array */
-    WINDOW->da_window.cap = 16;
-    WINDOW->da_window.arr = calloc(WINDOW->da_window.cap, sizeof(t_window));
-    if (!WINDOW->da_window.arr) { return (0); }
 
     /* success */
     win_eventflush();
     return (1);
+
+__win_init_failure:
+
+    /* release WINDOW */
+    if (WINDOW) { free(WINDOW), WINDOW = 0; }
+
+    /* failure */
+    return (0);
 }
 
 
@@ -2163,9 +2172,7 @@ WINDEF void *win_getprop(const uint64_t prop) {
     if (!WINDOW) { return (0); }
 
     switch (prop) {
-        case (WINDOW_PROP_PLATFORM_X11_DISPLAY):   { return (WINDOW->xlib.dpy); }
-        case (WINDOW_PROP_PLATFORM_X11_ROOT_ID):   { return (&WINDOW->xlib.r_id); }
-        case (WINDOW_PROP_PLATFORM_X11_SCREEN_ID): { return (&WINDOW->xlib.s_id); }
+        /* ... */
 
         default: { } break;
     }
@@ -2176,30 +2183,101 @@ WINDEF void *win_getprop(const uint64_t prop) {
 
 /* windowing functions */
 
+WININT t_window __win_wincreate(...);
+
 WINDEF int win_wincreate(t_window *win, const size_t w, const size_t h, const char *t, const uint64_t f) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
-
-    /* allocate `result` window */
-    t_window result = malloc(sizeof(struct s_window));
-    if (!result) { return (0); }
-
-    /* ... */
-
+    
+    t_window result = __win_wincreate(...);
+    if (!result) { goto __win_wincreate_failure; }
+   
+    win_winsetflag(result, f);
     win_winsettitle(result, t);
     win_wingetpos(result, &result->attr.x, &result->attr.y);
     win_wingetsize(result, &result->attr.w, &result->attr.h);
 
+
     /* append the window to platform's window linked list */
-    result->next   = WINDOW->win_ll;
+    result->next = WINDOW->win_ll;
     WINDOW->win_ll = result; 
+
     /* and return the result */
     *win = result;
 
     /* success */
     win_eventflush();
     return (1);
+
+__win_wincreate_failure:
+
+    /* release result */
+    if (result) { free(result), result = 0; }
+
+    /* ensure we "return" null */
+    *win = 0;
+
+    /* failure */
+    return (0);
+}
+
+
+WINDEF int win_wincreatenest(t_window *win, t_window parent, const size_t w, const size_t h, const char *t, const uint32_t f) {
+    /* null-check */
+    if (!WINDOW) { return (0); }
+    if (!win)    { return (0); }
+    if (!parent) { return (0); }
+
+    /* check if parent is valid */
+    if (!parent->xlib.client) { return (0); }
+    
+    t_window result = __win_wincreate(...);
+    if (!result) { goto __win_wincreate_failure; }
+   
+   
+    win_winsetflag(result, f);
+    win_winsettitle(result, t);
+    win_wingetpos(result, &result->attr.x, &result->attr.y);
+    win_wingetsize(result, &result->attr.w, &result->attr.h);
+
+    /* append the window to platform's window linked list */
+    result->next = WINDOW->win_ll;
+    WINDOW->win_ll = result; 
+
+    /* and return the result */
+    *win = result;
+
+    /* success */
+    win_eventflush();
+    return (1);
+
+__win_wincreatenest_failure:
+
+    /* release result */
+    if (result) { free(result), result = 0; }
+
+    /* ensure we "return" null */
+    *win = 0;
+
+    /* failure */
+    return (0);
+}
+
+WININT t_window __win_wincreate(Display *dpy, Window parent, const size_t w, const size_t h) {
+    /* alloc result */
+    t_window result = calloc(1, sizeof(struct s_window));
+    if (!result) { goto __win_wincreate_failure; } 
+
+    /* ... */
+
+    return (result);
+
+__win_wincreate_failure:
+
+    if (result) { free(result), result = 0; }
+
+    return (0);
 }
 
 
@@ -2238,7 +2316,27 @@ WINDEF int win_windestroy(t_window win) {
 }
 
 
-WINDEF int win_winmap(t_window win) {
+WININT int __win_winupdateflag(t_window);
+
+WINDEF int win_winsetflag(t_window win, const uint32_t f) {
+    /* null-check */
+    if (!WINDOW) { return (0); }
+    if (!win)    { return (0); }
+
+    /* toggle window attirbutes */
+    win->attr.f ^= f;
+
+    /* update window properties */
+    if (!__win_winupdateflag(win)) {
+        return (0);
+    }
+
+    /* success */
+    win_eventflush();
+    return (1);
+}
+
+WININT int __win_winupdateflag(t_window win) {
     /* null-check */
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
@@ -2246,6 +2344,49 @@ WINDEF int win_winmap(t_window win) {
     /* ... */
 
     /* success */
+    win_eventflush();
+    return (1);
+}
+
+
+WINDEF void *win_wingetprop(t_window win, const uint32_t prop) {
+    /* null-check */
+    if (!WINDOW)  { return (0); }
+    if (!win)     { return (0); }
+    switch (prop) {
+        case (WINDOW_PROP_WINDOW_X11_DISPLAY):   { return (win->xlib.dpy); }
+        case (WINDOW_PROP_WINDOW_X11_ROOT_ID):   { return (&win->xlib.parent); }
+        case (WINDOW_PROP_WINDOW_X11_WINDOW_ID): { return (&win->xlib.client); }
+        case (WINDOW_PROP_WINDOW_X11_VISUAL):    { return (win->xutil.visual.visual); }
+
+        default: { } break;
+    }
+
+    /* return nothing */
+    return (0);
+}
+
+
+WINDEF int win_winmap(t_window win) {
+    /* null-check */
+    if (!WINDOW) { return (0); }
+    if (!win)    { return (0); }
+
+    /* map window... */
+    /* ... */
+    win_eventflush();
+
+    /* wait until window mapped */
+    /* ... */
+    win->attr.mapped = 1;
+
+    /* update window properties */
+    if (!__win_winupdateflag(win)) {
+        return (0);
+    }
+
+    /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -2255,9 +2396,16 @@ WINDEF int win_winunmap(t_window win) {
     if (!WINDOW) { return (0); }
     if (!win)    { return (0); }
 
+    /* unmap window... */
     /* ... */
+    win_eventflush();
+
+    /* wait until window unmapped */
+    /* ... */
+    win->attr.mapped = 1;
 
     /* success */
+    win_eventflush();
     return (1);
 }
 
@@ -2392,7 +2540,7 @@ WINDEF int win_eventpoll(t_event *event) {
     if (win_eventpop(event)) { return (1); }
 
     /* handle platform events */
-    __win_eventpoll_x11();
+    __win_eventpoll();
 
     /* queue filled, return WINDOW_EVENT_NONE */
     *event = (t_event) { 0 };
@@ -2406,7 +2554,6 @@ WINDEF int win_eventwait(t_event *event) {
     if (!event)  { return (0); }
 
     /* ... */
-
 
     /* success */
     return (1);
