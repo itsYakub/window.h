@@ -7,82 +7,30 @@
  *      - licence: GNU LESSER GENERAL PUBLIC LICENSE Version 3, 29 June 2007
  *
  *
- *  Sample:
- *
- *      #include <stdio.h>
- *      #
- *      #define WINDOW_IMPLEMENTATION
- *      #include "./../window.h"
- *
- *      int main(void) {
- *          win_init();
- *
- *          t_window win;
- *          win_wincreate(&win, 800, 600, "Hello, window.h", 0);
- *          win_winmap(win);
- *
- *          int exit = 0;
- *          while (!exit) {
- *              t_event event = { 0 };
- *              while (win_eventpoll(&event)) {
- *                  switch (event.type) {
- *                      case (WINDOW_EVENT_QUIT): {
- *                          printf("WINDOW_EVENT_QUIT\n");
- *                          exit = 1;
- *                      } break;
- *                  }
- *              }
- *          }
- *
- *          win_quit();
- *          return (0);
- *      }
- *
- *
  *  Configuration (can be defined by user):
  *
  *      #define WINDOW_IMPLEMENTATION
- *          - TYPE:
- *              MANDATORY
- *          - DESCRIPTION:
- *              Embed the implementation section of the library into the source file.
- *              NOTE:
- *                  This should be defined only once in the entire codebase.
- *                  Otherwise, defining this option will cause a multiple-definitions error.
+ *          - TYPE: MANDATORY
+ *          - DESCRIPTION: Embed the implementation section of the library into the source file.
+ *                         NOTE:
+ *                             This should be defined only once in the entire codebase.
+ *                             Otherwise, defining this option will cause a multiple-definitions error.
  *
  *      #define WINDOW_BACKEND_X11
- *          - TYPE:
- *              OPTIONAL
- *          - DESCRIPTION:
- *              Force X11 implementation of window.h.
- *              Defined by default on GNU/Linux and unix-like systems.
- 
+ *          - TYPE: OPTIONAL
+ *          - DESCRIPTION: Force X11 implementation of window.h.
+ *                         Defined by default on GNU/Linux and unix-like systems.
+ * 
  *      #define WINDOW_BACKEND_WAYLAND
- *          - TYPE:
- *              OPTIONAL
- *          - DESCRIPTION:
- *              Force wayland implementation of window.h.
- *              NOTE:
- *                  Wayland implementation must be provided, as window.h doesnt serve it right now.
+ *          - TYPE: OPTIONAL
+ *          - DESCRIPTION: Force wayland implementation of window.h.
  *
  *
  *  Constants (MUST NOT be defined by user):
  *
  *      WINDOW_PLATFORM 
- *          - TYPE:
- *              String Literal
- *          - DESCRIPTION:
- *              Name of the platform window.h is used on as a string literal.
- *
- * 
- *  Contributors:
- *  
- *      Here's a list of contributors for window.h.
- *      If you contribute something, please add yourself to that list.
- *      Don't forget to include your contact info if you want.
- *      
- *      - Jakub Oleksiak (https://github.com/joleksia)
- *      - ... 
+ *          - TYPE: String Literal
+ *          - DESCRIPTION: Name of the platform window.h is used on as a string literal.
  * 
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
