@@ -23,9 +23,9 @@ remove :
 	rm -fr /usr/local/include/$(MK_NAME)
 	rm -f  /usr/local/include/$(MK_NAME).h
 
-.PHONY : test
+.PHONY : samples
 
-test :
-	make -C $(MK_ROOT)test/
+samples :
+	make -C $(MK_ROOT)samples/
 
 # ========
